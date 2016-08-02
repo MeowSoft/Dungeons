@@ -7,12 +7,19 @@ import android.view.View;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 
+//Main activity:
 public class MyActivity extends AppCompatActivity {
+
+
     private DrawingView drawView;
     private ImageButton currPaint;
 
+    private MapBuilder MyMapBuilder;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_my);
 
@@ -22,6 +29,8 @@ public class MyActivity extends AppCompatActivity {
 
         currPaint = (ImageButton)paintLayout.getChildAt(0);
         currPaint.setImageDrawable(getResources().getDrawable(R.drawable.paint_pressed));
+
+        MyMapBuilder = new MapBuilder(drawView);
     }
 
     public void paintClicked(View view){
@@ -34,6 +43,8 @@ public class MyActivity extends AppCompatActivity {
             imgView.setImageDrawable(getResources().getDrawable(R.drawable.paint_pressed));
             currPaint.setImageDrawable(getResources().getDrawable(R.drawable.paint));
             currPaint=(ImageButton)view;
+
+            MyMapBuilder.BuildMap();
         }
     }
 

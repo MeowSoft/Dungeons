@@ -2,6 +2,7 @@ package com.example.chris.helloworld;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.os.SystemClock;
 import android.util.AttributeSet;
 import android.view.View;
 import android.graphics.Bitmap;
@@ -17,12 +18,16 @@ public class DrawingView extends View {
 
     //drawing path
     private Path drawPath;
+
     //drawing and canvas paint
     private Paint drawPaint, canvasPaint;
+
     //initial color
     private int paintColor = 0xFF660000;
+
     //canvas
     private Canvas drawCanvas;
+
     //canvas bitmap
     private Bitmap canvasBitmap;
 
@@ -33,8 +38,8 @@ public class DrawingView extends View {
 
 
     private void setupDrawing(){
-//get drawing area setup for interaction
 
+        //get drawing area setup for interaction
         drawPath = new Path();
         drawPaint = new Paint();
 
@@ -42,33 +47,36 @@ public class DrawingView extends View {
         drawPaint.setColor(paintColor);
 
         drawPaint.setAntiAlias(true);
-        drawPaint.setStrokeWidth(20);
-        drawPaint.setStyle(Paint.Style.STROKE);
-        drawPaint.setStrokeJoin(Paint.Join.ROUND);
-        drawPaint.setStrokeCap(Paint.Cap.ROUND);
+        drawPaint.setStrokeWidth(2);
+        drawPaint.setStyle(Paint.Style.FILL_AND_STROKE);
+        drawPaint.setStrokeJoin(Paint.Join.MITER);
+        drawPaint.setStrokeCap(Paint.Cap.SQUARE);
 
         canvasPaint = new Paint(Paint.DITHER_FLAG);
     }
 
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-//view given size
+
+        //view given size
 
         super.onSizeChanged(w, h, oldw, oldh);
 
         canvasBitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
         drawCanvas = new Canvas(canvasBitmap);
     }
+
     @Override
     protected void onDraw(Canvas canvas) {
-//draw view
+        //draw view
 
         canvas.drawBitmap(canvasBitmap, 0, 0, canvasPaint);
         canvas.drawPath(drawPath, drawPaint);
     }
+
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-//detect user touch
+        //detect user touch
 
         float touchX = event.getX();
         float touchY = event.getY();
@@ -93,10 +101,33 @@ public class DrawingView extends View {
     }
 
     public void setColor(String newColor){
-//set color
+
+        //set color
         invalidate();
         paintColor = Color.parseColor(newColor);
         drawPaint.setColor(paintColor);
+    }
+
+    public void DrawRoom(int RoomX, int RoomY, boolean room) {
+
+        int PixX;
+        int PixY;
+
+        PixX = RoomX * 30;
+        PixY = RoomY * 30;
+
+		if(room) {
+			drawPaint.setColor(Color.parseColor("Red"));
+		}
+		
+		else {
+			drawPaint.setColor(Color.parseColor("Black"));
+		}
+			
+			
+		
+        drawCanvas.drawRect(PixX, PixY, (PixX + 25), (PixY + 25), drawPaint );
+        invalidate();
     }
 
 }
