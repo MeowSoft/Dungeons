@@ -31,12 +31,33 @@ public class MyActivity extends AppCompatActivity {
         currPaint.setImageDrawable(getResources().getDrawable(R.drawable.paint_pressed));
 
         MyMapBuilder = new MapBuilder(drawView);
-    }
+		drawView.setOnTouchListener(new OnSwipeTouchListener(MyActivity.this) {
+            public void onSwipeTop() {
+                MyMapBuilder.ShiftMap(0, 1);
+                        MyMapBuilder.DrawMapWithOutDelay(10);
+            }
+        public void onSwipeRight() {
+            MyMapBuilder.ShiftMap(-1, 0);
+            MyMapBuilder.DrawMapWithOutDelay(10);
+        }
+        public void onSwipeLeft() {
+            MyMapBuilder.ShiftMap(1, 0);
+            MyMapBuilder.DrawMapWithOutDelay(10);
+        }
+        public void onSwipeBottom() {
+            MyMapBuilder.ShiftMap(0, -1);
+            MyMapBuilder.DrawMapWithOutDelay(10);
+			
+        }
+
+        });
+        }
+		
+
 
     public void paintClicked(View view){
         //use chosen color
-        if(view!=currPaint){
-//update color
+
             ImageButton imgView = (ImageButton)view;
             String color = view.getTag().toString();
             drawView.setColor(color);
@@ -45,7 +66,16 @@ public class MyActivity extends AppCompatActivity {
             currPaint=(ImageButton)view;
 
             MyMapBuilder.BuildMap();
-        }
+        MyMapBuilder.DrawMapWithDelay(10);
+
     }
+
+	//Map clicked:
+	public void MapClicked(View view) {
+	
+
+	
+	}
+	
 
 }

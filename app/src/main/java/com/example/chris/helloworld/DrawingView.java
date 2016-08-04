@@ -77,7 +77,7 @@ public class DrawingView extends View {
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         //detect user touch
-
+/*
         float touchX = event.getX();
         float touchY = event.getY();
 
@@ -95,7 +95,7 @@ public class DrawingView extends View {
             default:
                 return false;
         }
-
+*/
         invalidate();
         return true;
     }
@@ -128,6 +128,23 @@ public class DrawingView extends View {
 		
         drawCanvas.drawRect(PixX, PixY, (PixX + 25), (PixY + 25), drawPaint );
         invalidate();
+    }
+
+    public void EraseMap() {
+
+	drawPaint.setColor(Color.parseColor("Black"));
+        drawCanvas.drawColor(0xFFFFFFFF);
+        invalidate();
+    }
+
+    public int GetCenterX() {
+
+        return (drawCanvas.getWidth() / 2);
+    }
+
+    public int GetCenterY() {
+
+        return (drawCanvas.getHeight() / 2);
     }
 
 }

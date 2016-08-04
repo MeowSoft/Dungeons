@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">HelloWorld</string>
+    <string name="app_name">Dungeons n\' stuff</string>
     <string name="edit_message">Enter somethin\' fool!</string>
     <string name="button_send">Send that shit!</string>
     <string name="action_settings">Settings</string>
