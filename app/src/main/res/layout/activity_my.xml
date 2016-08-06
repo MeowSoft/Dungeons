@@ -4,7 +4,7 @@
 
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFCCCCCC"
+    android:background="#FF888888"
     android:orientation="vertical"
     tools:context=".MyActivity" >
 
@@ -13,39 +13,27 @@
         android:id="@+id/drawing"
         android:layout_width="fill_parent"
         android:layout_height="0dp"
-        android:layout_marginBottom="3dp"
+        android:layout_marginBottom="5dp"
         android:layout_marginLeft="5dp"
         android:layout_marginRight="5dp"
-        android:layout_marginTop="3dp"
+        android:layout_marginTop="5dp"
         android:layout_weight="1"
-        android:background="#FFFFFFFF"
-        android:onClick="MapClicked" />
+        android:background="#FF888888"
+        />
+
 
     <LinearLayout
-        android:layout_width="wrap_content"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:orientation="vertical" >
 
-        <!-- Top Row -->
-        <LinearLayout
-            android:id="@+id/paint_colors"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal" >
-
-            <ImageButton
-                android:layout_width="@dimen/large_brush"
-                android:layout_height="@dimen/large_brush"
-                android:layout_margin="2dp"
-                android:background="#FFFF0000"
-                android:contentDescription="@string/paint"
-                android:onClick="paintClicked"
-                android:src="@drawable/paint"
-                android:tag="#FFFF0000" />
-
-        </LinearLayout>
-        <!-- Bottom Row -->
+   
+    <Button
+        android:layout_width="fill_parent"
+        android:layout_height="100dp"
+        android:text="Generate Dungeon"
+        android:id="@+id/button" android:onClick="paintClicked" />
 
 
     </LinearLayout>

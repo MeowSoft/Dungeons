@@ -16,8 +16,7 @@ import android.view.MotionEvent;
  */
 public class DrawingView extends View {
 
-    //drawing path
-    private Path drawPath;
+
 
     //drawing and canvas paint
     private Paint drawPaint, canvasPaint;
@@ -31,16 +30,110 @@ public class DrawingView extends View {
     //canvas bitmap
     private Bitmap canvasBitmap;
 
-    public DrawingView(Context context, AttributeSet attrs){
-        super(context, attrs);
+    private static final int MAP_DRAW_SIZE = 9;
+
+	private int RoomSize;
+	
+	
+	//{ DrawingView constructor ================================================
+	//|
+	//| This constructor calls the superclass constructor and then sets up
+	//| a canvas to draw our dungeon map on.
+	//|
+	//| ------------------------------------------------------------------------
+    public DrawingView(
+		Context 		context,
+		AttributeSet 	attributes
+	){
+	//--------------------------------------------------------------------------
+		
+		//Call superclass constructor.
+        super(context, attributes);
+		
+		//Set up canvas.
         setupDrawing();
     }
+	//} ------------------------------------------------------------------------
 
+	//{ onSizeChanged method ===================================================
+	//|
+	//|	Override for View::onSizeChanged method.
+	//|
+	//| Results:
+	//|
+	//|		Creates a new bitmap and canvas and sets the width of the dungeon
+	//|		rooms based on the width of the canvas.
+	//|
+	//| ------------------------------------------------------------------------
+    @Override
+    protected void onSizeChanged(
+		int 	viewWidth,
+		int 	viewHeight,
+		int 	oldWidth,
+		int 	oldHeight
+	){
+	//--------------------------------------------------------------------------
+	
+        //Call superclass onSizeChanged.
+        super.onSizeChanged(viewWidth, viewHeight, oldWidth, oldHeight);
 
+		//Create a bitmap with the new view width and height.
+        canvasBitmap = Bitmap.createBitmap(viewWidth, viewHeight, Bitmap.Config.ARGB_8888);
+		
+		//Create a new canvas with the bitmap.
+        drawCanvas = new Canvas(canvasBitmap);
+		
+		//Set roomsize based on new canvas width.
+		RoomSize = (drawCanvas.getWidth() / MAP_DRAW_SIZE);
+    }
+	//} ------------------------------------------------------------------------
+	
+	//{ onDraw method ==========================================================
+	//|
+	//|	Override for View::onDraw method.
+	//|
+	//| Results:
+	//|
+	//|		Draws the canvas bitmap to the screen.
+	//|
+	//| ------------------------------------------------------------------------
+    @Override
+    protected void onDraw(
+		Canvas 	canvas
+	){
+	//--------------------------------------------------------------------------
+
+		//Redraw the canvas.
+        canvas.drawBitmap(canvasBitmap, 0, 0, canvasPaint);
+    }
+	//} ------------------------------------------------------------------------
+
+	//{ onTouchEvent method ====================================================
+	//|
+	//|	Override for View::onTouchEvent method.
+	//|
+	//| Results:
+	//|
+	//|		Detects touch events on the view.
+	//|
+	//| ------------------------------------------------------------------------
+    /*@Override
+    public boolean onTouchEvent(MotionEvent event) {
+        //detect user touch
+
+        invalidate();
+        return true;
+    }
+*/
+	public int getMapDim() {
+		return(MAP_DRAW_SIZE);
+	}
+	
+		
     private void setupDrawing(){
 
         //get drawing area setup for interaction
-        drawPath = new Path();
+
         drawPaint = new Paint();
 
 
@@ -55,51 +148,6 @@ public class DrawingView extends View {
         canvasPaint = new Paint(Paint.DITHER_FLAG);
     }
 
-    @Override
-    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-
-        //view given size
-
-        super.onSizeChanged(w, h, oldw, oldh);
-
-        canvasBitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
-        drawCanvas = new Canvas(canvasBitmap);
-    }
-
-    @Override
-    protected void onDraw(Canvas canvas) {
-        //draw view
-
-        canvas.drawBitmap(canvasBitmap, 0, 0, canvasPaint);
-        canvas.drawPath(drawPath, drawPaint);
-    }
-
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        //detect user touch
-/*
-        float touchX = event.getX();
-        float touchY = event.getY();
-
-        switch (event.getAction()) {
-            case MotionEvent.ACTION_DOWN:
-                drawPath.moveTo(touchX, touchY);
-                break;
-            case MotionEvent.ACTION_MOVE:
-                drawPath.lineTo(touchX, touchY);
-                break;
-            case MotionEvent.ACTION_UP:
-                drawCanvas.drawPath(drawPath, drawPaint);
-                drawPath.reset();
-                break;
-            default:
-                return false;
-        }
-*/
-        invalidate();
-        return true;
-    }
-
     public void setColor(String newColor){
 
         //set color
@@ -108,43 +156,38 @@ public class DrawingView extends View {
         drawPaint.setColor(paintColor);
     }
 
-    public void DrawRoom(int RoomX, int RoomY, boolean room) {
+    public void DrawRoom(int RoomX, int RoomY, int MaxX, int MaxY, boolean room, boolean ctr) {
 
         int PixX;
         int PixY;
 
-        PixX = RoomX * 30;
-        PixY = RoomY * 30;
-
+        PixX = ((RoomX) * RoomSize);
+        PixY = ((RoomY) * RoomSize);
+drawPaint.setColor(Color.parseColor("Black"));
 		if(room) {
+			
 			drawPaint.setColor(Color.parseColor("Red"));
 		}
 		
-		else {
-			drawPaint.setColor(Color.parseColor("Black"));
-		}
-			
+	
 			
 		
-        drawCanvas.drawRect(PixX, PixY, (PixX + 25), (PixY + 25), drawPaint );
+        drawCanvas.drawRect(PixX, PixY, (PixX + RoomSize - 5), (PixY + RoomSize - 5), drawPaint );
+		if(ctr) {
+			drawPaint.setStyle(Paint.Style.STROKE);
+			drawPaint.setColor(Color.parseColor("Green"));
+			drawCanvas.drawRect(PixX, PixY, (PixX + RoomSize - 5), (PixY + RoomSize - 5), drawPaint );
+			drawPaint.setStyle(Paint.Style.FILL_AND_STROKE);
+		}
         invalidate();
     }
 
     public void EraseMap() {
 
 	drawPaint.setColor(Color.parseColor("Black"));
-        drawCanvas.drawColor(0xFFFFFFFF);
+        drawCanvas.drawColor(0xFF888888);
         invalidate();
     }
 
-    public int GetCenterX() {
-
-        return (drawCanvas.getWidth() / 2);
-    }
-
-    public int GetCenterY() {
-
-        return (drawCanvas.getHeight() / 2);
-    }
 
 }

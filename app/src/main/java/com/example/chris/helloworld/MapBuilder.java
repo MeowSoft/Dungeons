@@ -18,6 +18,9 @@ public class MapBuilder {
 	
     private static final int MAP_X_SIZE = 31;
     private static final int MAP_Y_SIZE = 31;
+	
+    private static final int MAP_X_DRAW_SIZE = 10;
+    private static final int MAP_Y_DRAW_SIZE = 10;
 
 
     private int BuildX;
@@ -178,15 +181,49 @@ DelCount = 20;
 	}
 			
 		
-		public void ShiftMap(int MoveX, int MoveY) {
+		public boolean ShiftMap(int MoveX, int MoveY) {
 			
-			if((MoveX > 0) && (BuildX < (MAP_X_SIZE - 1))) BuildX++;
-			else if((MoveX < 0) && (BuildX > 0)) BuildX--;
-			else if((MoveY > 0) && (BuildY < (MAP_Y_SIZE - 1))) BuildY++;
-			else if((MoveY < 0) && (BuildY > 0)) BuildY--;
+			boolean result = false;
+			
+			if((MoveX > 0) && (BuildX < (MAP_X_SIZE - 1))) {
+
+				if(_CheckRoom((BuildX + 1), BuildY)) {
+					BuildX++;
+					result = true;
+				}
+			}
+			
+			else if((MoveX < 0) && (BuildX > 0)) {
+
+				if(_CheckRoom((BuildX - 1), BuildY)) {
+					BuildX--;
+					result = true;
+				}
+			}
+			
+			else if((MoveY > 0) && (BuildY < (MAP_Y_SIZE - 1))) {
+
+				if(_CheckRoom(BuildX, (BuildY + 1))) {
+					BuildY++;
+					result = true;
+				}
+			}
+			
+			else if((MoveY < 0) && (BuildY > 0)) {
+
+				if(_CheckRoom(BuildX, (BuildY - 1))) {
+					BuildY--;
+					result = true;
+				}
+			}
+			
+			
+			return(result);
 		}
 		
-	private void _DrawMap(int EdgeDim, DrawRoomFunc DF) {
+	private int MyDelay;
+	
+	private void _DrawMap( DrawRoomFunc DF) {
 	
 		int x;
 		int y;
@@ -194,115 +231,120 @@ DelCount = 20;
 		int MyX;
 		int MyY;
 		int DirFlip;
-		int DelCount;
+		int DelCount = 20;
 		
 
 		
 		int myEdgeDim;
 		DirFlip = 1;
-		myEdgeDim = EdgeDim;
-		if((myEdgeDim % 2) > 0) myEdgeDim++;
-		
-	DelCount = 20;
+
+	MyDelay = 20;
 	MyX = BuildX;
 	MyY = BuildY;
 	
-	int AbsX;
-	int AbsY;
+	int viewX;
+	int viewY;
 	boolean roomcheck;
-	AbsX = myEdgeDim / 2;
-	AbsY = myEdgeDim / 2;
 
-	MyView.EraseMap();
-DelCount = DF.func(AbsX, AbsY, Map[MyX][MyY].CheckIsRoom(), DelCount);
+	int myMapDim = MyView.getMapDim();
+	//if((myMapDim % 2) != 0) { myMapDim++; }
+	myMapDim--;
+	int offset = myMapDim / 2;
+		
 	
-        for(x = 0; x < myEdgeDim; x++) {
+	viewX = offset;
+	viewY = offset;
+	myEdgeDim = viewX;
+	int temp;
+	MyView.EraseMap();
+	
+		//Draw center room.
+		DF.func(viewX, viewY, Map[MyX][MyY].CheckIsRoom(), DelCount, true);
+	
+        for(x = 0; x <= myMapDim; x++) {
 
-            for (y = 0; y <=  x; y++){
+            for (y = 0; y <  x; y++){
 			
 				
                 MyX += DirFlip;
-				AbsX += DirFlip;
+				viewX+= DirFlip;
 				
-				if((MyX < MAP_X_SIZE) && (MyY < MAP_Y_SIZE) && (MyX >= 0) && (MyY >= 0)) roomcheck = Map[MyX][MyY].CheckIsRoom();
-				else roomcheck = false;
-				
-                DelCount = DF.func(AbsX, AbsY, roomcheck, DelCount);
+                DF.func(viewX, viewY, _CheckRoom(MyX, MyY), DelCount, false);
             }
 
-	
-            for(y = 0; y <= x; y++){
+	temp = (x == myMapDim) ? (x - 1) : x;
+            for(y = 0; y <= temp; y++){
 				
 				
                 MyY += DirFlip;
-				AbsY += DirFlip;
+				viewY += DirFlip;
 				
-				if((MyX < MAP_X_SIZE) && (MyY < MAP_Y_SIZE) && (MyX >= 0) && (MyY >= 0)) roomcheck = Map[MyX][MyY].CheckIsRoom();
-				else roomcheck = false;
 				
-                DelCount = DF.func(AbsX, AbsY, roomcheck, DelCount);
+                DF.func(viewX, viewY, _CheckRoom(MyX, MyY), DelCount, false);
             }
-
+			
             DirFlip *= -1;
 			
         }
 		
-		  for (y = 0; y < x; y++){
-			
-				
-                MyX += DirFlip;
-				AbsX += DirFlip;
-				
-				if((MyX < MAP_X_SIZE) && (MyY < MAP_Y_SIZE) && (MyX >= 0) && (MyY >= 0)) roomcheck = Map[MyX][MyY].CheckIsRoom();
-				else roomcheck = false;
-				
-                DelCount = DF.func(AbsX, AbsY, roomcheck, DelCount);
-            }
+	
 
 	
 	}
 	
-	public void DrawMapWithDelay(int EdgeDim) {
-		_DrawMap(EdgeDim, new DrawRoomFunc() {
+	private boolean _CheckRoom(int RoomX, int RoomY) {
 		
-    public int func(final int RoomX, final int RoomY, final boolean room, int Delay) {
+		boolean result;
+		
+		result = false;
+		if((RoomX < MAP_X_SIZE) && (RoomY < MAP_Y_SIZE) && (RoomX >= 0) && (RoomY >= 0)) result = Map[RoomX][RoomY].CheckIsRoom();
+		return(result);
+	}
+		
+	
+	interface DrawRoomFunc {
+		int func(final int RoomX, final int RoomY, final boolean room, int Delay, boolean ctr);
+	}
+	
+	public void DrawMapWithDelay() {
+		_DrawMap(new DrawRoomFunc() {
+		
+    public int func(final int RoomX, final int RoomY, final boolean room, int Delay, final boolean ctr) {
 
         final Handler handler = new Handler();
 
 		int DelCalc;
 		
-		DelCalc = 2500 - (Delay * 10);
+		DelCalc = 2500 - (MyDelay * 10);
 		DelCalc /= 100;
 
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
                 // Do something after 5s = 5000ms
-                MyView.DrawRoom(RoomX, RoomY, room);
+                MyView.DrawRoom(RoomX, RoomY, MAP_X_DRAW_SIZE, MAP_Y_DRAW_SIZE, room, ctr);
             }
-        }, Delay);
+        }, MyDelay);
 
+		MyDelay = MyDelay + DelCalc;
+		
         return(Delay + DelCalc);
 
 		} } );
 	}
 
-	public void DrawMapWithOutDelay(int EdgeDim) {
-		_DrawMap(EdgeDim, new DrawRoomFunc() {
+	public void DrawMapWithOutDelay() {
+		_DrawMap(new DrawRoomFunc() {
 		
-    public int func(final int RoomX, final int RoomY, final boolean room, int Delay) {
+    public int func(final int RoomX, final int RoomY, final boolean room, int Delay, boolean ctr) {
 
                 // Do something after 5s = 5000ms
-                MyView.DrawRoom(RoomX, RoomY, room);
+                MyView.DrawRoom(RoomX, RoomY, MAP_X_DRAW_SIZE, MAP_Y_DRAW_SIZE, room, ctr);
         
 
         return(0);
 
 		} } );
-	}
-	
-	interface DrawRoomFunc {
-		int func(final int RoomX, final int RoomY, final boolean room, int Delay);
 	}
 	
 }
