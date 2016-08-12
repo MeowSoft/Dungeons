@@ -322,7 +322,7 @@ DelCount = 20;
             @Override
             public void run() {
                 // Do something after 5s = 5000ms
-                MyView.DrawRoom(RoomX, RoomY, MAP_X_DRAW_SIZE, MAP_Y_DRAW_SIZE, room, ctr);
+                MyView.DrawRoom(RoomX, RoomY,  room, ctr);
             }
         }, MyDelay);
 
@@ -333,13 +333,30 @@ DelCount = 20;
 		} } );
 	}
 
+	//{ DrawMapWithOutDelay ====================================================
+	//|
+	//|	Draw map without delay between rooms.
+	//|
+	//|	Results:
+	//|
+	//|		The viewable map area is drawn instantly.
+	//|
+	//| ------------------------------------------------------------------------
 	public void DrawMapWithOutDelay() {
-		_DrawMap(new DrawRoomFunc() {
 		
-    public int func(final int RoomX, final int RoomY, final boolean room, int Delay, boolean ctr) {
+		
+		_DrawMap(new DrawRoomFunc() {
+			
+			public int func(
+				final int RoomX,
+				final int RoomY,
+				final boolean room,
+				int Delay,
+				boolean ctr
+			){
 
-                // Do something after 5s = 5000ms
-                MyView.DrawRoom(RoomX, RoomY, MAP_X_DRAW_SIZE, MAP_Y_DRAW_SIZE, room, ctr);
+                //Draw the room.
+                MyView.DrawRoom(RoomX, RoomY,  room, ctr);
         
 
         return(0);

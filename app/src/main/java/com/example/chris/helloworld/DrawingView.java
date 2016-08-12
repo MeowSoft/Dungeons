@@ -1,8 +1,21 @@
+//| ============================================================================
+//|
+//|	File:			DrawingView.java
+//|	Environment:	Android Studio 2.1.2
+//|
+//|	Description:
+//|
+//|		DrawingView is a class to set up a view to draw the dungeon map and
+//|		other bits to the screen.
+//|
+//| ----------------------------------------------------------------------------
+
 package com.example.chris.helloworld;
 
 import android.content.Context;
 import android.graphics.Color;
 import android.os.SystemClock;
+import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.view.View;
 import android.graphics.Bitmap;
@@ -11,31 +24,31 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.view.MotionEvent;
 
-/**
- * Created by Chris on 7/23/2016.
- */
-public class DrawingView extends View {
+public class DrawingView extends View  {
 
+	//{ Private members: =======================================================
 
+		//drawing and canvas paint
+		private Paint drawPaint;
 
-    //drawing and canvas paint
-    private Paint drawPaint, canvasPaint;
+		//canvas
+		private Canvas drawCanvas;
 
-    //initial color
-    private int paintColor = 0xFF660000;
+		//canvas bitmap
+		private Bitmap canvasBitmap;
 
-    //canvas
-    private Canvas drawCanvas;
+		private static final int MAP_DRAW_SIZE = 9;
+		private static final int MAP_GRID_BORDER_SIZE = 5;
 
-    //canvas bitmap
-    private Bitmap canvasBitmap;
-
-    private static final int MAP_DRAW_SIZE = 9;
-
-	private int RoomSize;
+		private int RoomSize;
+		
+		private Context myContext;
+		
+	//} ------------------------------------------------------------------------
 	
-	
-	//{ DrawingView constructor ================================================
+	//{ Constructors: ==========================================================
+
+	//{ ------------------------------------------------------------------------
 	//|
 	//| This constructor calls the superclass constructor and then sets up
 	//| a canvas to draw our dungeon map on.
@@ -45,17 +58,22 @@ public class DrawingView extends View {
 		Context 		context,
 		AttributeSet 	attributes
 	){
-	//--------------------------------------------------------------------------
 		
 		//Call superclass constructor.
         super(context, attributes);
 		
+		myContext = context;
+		
 		//Set up canvas.
         setupDrawing();
-    }
+		
+    } //} ----------------------------------------------------------------------
+	
 	//} ------------------------------------------------------------------------
 
-	//{ onSizeChanged method ===================================================
+	//{ View class method overrides: ===========================================
+	
+	//{ onSizeChanged ----------------------------------------------------------
 	//|
 	//|	Override for View::onSizeChanged method.
 	//|
@@ -72,8 +90,6 @@ public class DrawingView extends View {
 		int 	oldWidth,
 		int 	oldHeight
 	){
-	//--------------------------------------------------------------------------
-	
         //Call superclass onSizeChanged.
         super.onSizeChanged(viewWidth, viewHeight, oldWidth, oldHeight);
 
@@ -85,10 +101,10 @@ public class DrawingView extends View {
 		
 		//Set roomsize based on new canvas width.
 		RoomSize = (drawCanvas.getWidth() / MAP_DRAW_SIZE);
-    }
-	//} ------------------------------------------------------------------------
+		
+    } //} ----------------------------------------------------------------------
 	
-	//{ onDraw method ==========================================================
+	//{ onDraw -----------------------------------------------------------------
 	//|
 	//|	Override for View::onDraw method.
 	//|
@@ -101,93 +117,158 @@ public class DrawingView extends View {
     protected void onDraw(
 		Canvas 	canvas
 	){
-	//--------------------------------------------------------------------------
-
 		//Redraw the canvas.
-        canvas.drawBitmap(canvasBitmap, 0, 0, canvasPaint);
-    }
+        canvas.drawBitmap(canvasBitmap, 0, 0, drawPaint);
+		
+    } //} ----------------------------------------------------------------------
+	
 	//} ------------------------------------------------------------------------
 
-	//{ onTouchEvent method ====================================================
+	//{ Private methods: =======================================================
+	
+	//{ setupDrawing -----------------------------------------------------------
 	//|
-	//|	Override for View::onTouchEvent method.
+	//|	Set up the drawing area.
 	//|
-	//| Results:
+	//|	Results:
 	//|
-	//|		Detects touch events on the view.
+	//|		A new Paint object is created and its attributes are set.
 	//|
 	//| ------------------------------------------------------------------------
-    /*@Override
-    public boolean onTouchEvent(MotionEvent event) {
-        //detect user touch
-
-        invalidate();
-        return true;
-    }
-*/
-	public int getMapDim() {
-		return(MAP_DRAW_SIZE);
-	}
-	
-		
     private void setupDrawing(){
 
-        //get drawing area setup for interaction
-
+        //Create paint object.
         drawPaint = new Paint();
 
-
-        drawPaint.setColor(paintColor);
-
+		//Set drawing style params.
         drawPaint.setAntiAlias(true);
         drawPaint.setStrokeWidth(2);
         drawPaint.setStyle(Paint.Style.FILL_AND_STROKE);
         drawPaint.setStrokeJoin(Paint.Join.MITER);
         drawPaint.setStrokeCap(Paint.Cap.SQUARE);
 
-        canvasPaint = new Paint(Paint.DITHER_FLAG);
-    }
+    } //} ----------------------------------------------------------------------
+	
+	//} ------------------------------------------------------------------------
 
-    public void setColor(String newColor){
-
-        //set color
-        invalidate();
-        paintColor = Color.parseColor(newColor);
-        drawPaint.setColor(paintColor);
-    }
-
-    public void DrawRoom(int RoomX, int RoomY, int MaxX, int MaxY, boolean room, boolean ctr) {
-
+	//{ Public methods: ========================================================
+	
+	//{ getMapDim --------------------------------------------------------------
+	//|
+	//|	Return the dimensions of the viewable map area in number of rooms.
+	//|
+	//|	Returns:
+	//|
+	//|		int
+	//|		The size of the viewable map area in rooms.
+	//|
+	//|	Results:
+	//|
+	//|		The square viewing area number of map rooms to display is returned.
+	//|
+	//| ------------------------------------------------------------------------
+	public int getMapDim() {
+		
+		//Return draw size.
+		return(MAP_DRAW_SIZE);
+		
+	} //} ----------------------------------------------------------------------
+	
+	//{ DrawRoom ---------------------------------------------------------------
+	//|
+	//| Draw a map room to the view.
+	//|
+	//|	Function parameters:
+	//|
+	//|		RoomX
+	//|		RoomY
+	//|		Map coordinates of the room to draw relative to the room in the
+	//|		center of the display.
+	//|
+	//|	Results:
+	//|
+	//|		The room is drawn to the view.
+	//|
+	//| ------------------------------------------------------------------------
+    public void DrawRoom(
+		int 		RoomX,
+		int 		RoomY,  
+		boolean 	isRoom,
+		boolean 	ctr
+	){
+		//Vars to calculate pixel coordinates of room to draw.
         int PixX;
         int PixY;
 
+		//Var to select room color.
+		int roomColor;
+		
+		//Get pixel coordinates for room.
         PixX = ((RoomX) * RoomSize);
         PixY = ((RoomY) * RoomSize);
-drawPaint.setColor(Color.parseColor("Black"));
-		if(room) {
+		
+		//Default to no room color.
+		roomColor = ContextCompat.getColor(myContext, R.color.noRoomColor);
+		drawPaint.setColor(roomColor);
+		
+		//If we are drawing a room...
+		if(isRoom) {
 			
-			drawPaint.setColor(Color.parseColor("Red"));
+			//Set room color.
+			roomColor = ContextCompat.getColor(myContext, R.color.roomColor);
+			drawPaint.setColor(roomColor);
 		}
 		
-	
-			
+		//Draw the room.
+        drawCanvas.drawRect(
+			PixX,
+			PixY,
+			(PixX + RoomSize - MAP_GRID_BORDER_SIZE),
+			(PixY + RoomSize - MAP_GRID_BORDER_SIZE),
+			drawPaint
+		);
 		
-        drawCanvas.drawRect(PixX, PixY, (PixX + RoomSize - 5), (PixY + RoomSize - 5), drawPaint );
+		//If this is the room in the center of the view...
 		if(ctr) {
+			
+			//Draw character.
 			drawPaint.setStyle(Paint.Style.STROKE);
 			drawPaint.setColor(Color.parseColor("Green"));
-			drawCanvas.drawRect(PixX, PixY, (PixX + RoomSize - 5), (PixY + RoomSize - 5), drawPaint );
+			drawCanvas.drawRect(PixX, PixY, (PixX + RoomSize - MAP_GRID_BORDER_SIZE), (PixY + RoomSize - MAP_GRID_BORDER_SIZE), drawPaint );
 			drawPaint.setStyle(Paint.Style.FILL_AND_STROKE);
 		}
+		
+		//Redraw view.
         invalidate();
-    }
+		
+    } //} ----------------------------------------------------------------------
 
+	//{ EraseMap ---------------------------------------------------------------
+	//|
+	//|	Erase the view.
+	//|
+	//|	Results:
+	//|
+	//|		Erases the view. Call this before redrawing after the map has
+	//|		moved.
+	//|
+	//| ------------------------------------------------------------------------
     public void EraseMap() {
 
-	drawPaint.setColor(Color.parseColor("Black"));
-        drawCanvas.drawColor(0xFF888888);
+		//Var to select erase color.
+		int eraseColor;
+		
+		//Get erase color.
+		eraseColor = ContextCompat.getColor(myContext, R.color.mapBackgroundColor);
+
+		//Erase the view.
+        drawCanvas.drawColor(eraseColor);
+		
+		//Redraw.
         invalidate();
-    }
+		
+    } //} ----------------------------------------------------------------------
 
-
+	//} ------------------------------------------------------------------------
+	
 }

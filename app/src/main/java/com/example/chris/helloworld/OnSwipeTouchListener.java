@@ -20,6 +20,17 @@ import android.view.View.OnTouchListener;
 
 public class OnSwipeTouchListener implements OnTouchListener {
 
+	//An interface to define functions to execute on a swipe.
+	public interface SwipeFunctions {
+        public void swipeRightFunc();
+		public void swipeLeftFunc();
+		public void swipeUpFunc();
+		public void swipeDownFunc() ;
+    }
+
+	//Swipe functions.
+	private SwipeFunctions mySwipeFuncs;
+	
 	//GestureDetector object to detect swipes.
     private final GestureDetector gestureDetector;
 
@@ -36,6 +47,9 @@ public class OnSwipeTouchListener implements OnTouchListener {
 		//Set our gestureDetector to a new GestureDetector created with our
 		//SwipeGestureListener class.
         gestureDetector = new GestureDetector(ctx, new SwipeGestureListener());
+		
+		//Set swipe functions interface.
+		mySwipeFuncs = (SwipeFunctions)ctx;
     }
 	//} ------------------------------------------------------------------------
 
@@ -133,9 +147,9 @@ public class OnSwipeTouchListener implements OnTouchListener {
 						
 						//Call function for right or left swipe.
                         if (dX > 0) {
-                            swipeRightFunc();
+                            mySwipeFuncs.swipeRightFunc();
                         } else {
-                            swipeLeftFunc();
+                            mySwipeFuncs.swipeLeftFunc();
                         }
                     }
 					
@@ -148,9 +162,9 @@ public class OnSwipeTouchListener implements OnTouchListener {
 					
 					//Call function for up or down swipe.
                     if (dY > 0) {
-                        swipeDownFunc();
+                        mySwipeFuncs.swipeDownFunc();
                     } else {
-                        swipeUpFunc();
+                        mySwipeFuncs.swipeUpFunc();
                     }
                 }
 				
@@ -169,12 +183,6 @@ public class OnSwipeTouchListener implements OnTouchListener {
 		//} --------------------------------------------------------------------
     }
 	//} ------------------------------------------------------------------------
-	
-	//Methods to execute on swipe in up, down, left, or right directions.
-    public void swipeRightFunc() {}
-    public void swipeLeftFunc() {}
-    public void swipeUpFunc() {}
-    public void swipeDownFunc() {}
-	
-}
+
+} //----------------------------------------------------------------------------
 

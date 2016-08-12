@@ -1,6 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <resources>
+
+	<!-- Styles colors: -->
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
+	
+	<!-- Other colors: -->
+	<color name="noRoomColor">#FF000000</color>
+	<color name="roomColor">#FFFF0000</color>
+	<color name="mapBackgroundColor">#FF888888</color>
+	
 </resources>
