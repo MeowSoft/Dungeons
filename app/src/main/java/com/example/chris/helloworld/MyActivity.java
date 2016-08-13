@@ -61,28 +61,28 @@ public class MyActivity
 
 	@Override
 public void swipeUpFunc() {
-                if(MyMapBuilder.ShiftMap(0, 1)) {
-                        MyMapBuilder.DrawMapWithOutDelay();
+                if(MyMapBuilder.moveHero(0, 1)) {
+                        drawView.DrawMapWithOutDelay();
 				}
             }
 			
 			@Override
         public void swipeRightFunc() {
-            if(MyMapBuilder.ShiftMap(-1, 0)) {
-            MyMapBuilder.DrawMapWithOutDelay();
+            if(MyMapBuilder.moveHero(-1, 0)) {
+            drawView.DrawMapWithOutDelay();
 			}
         }
 		@Override
         public void swipeLeftFunc() {
-           if( MyMapBuilder.ShiftMap(1, 0)) {
-            MyMapBuilder.DrawMapWithOutDelay();
+           if( MyMapBuilder.moveHero(1, 0)) {
+            drawView.DrawMapWithOutDelay();
 		   }
         }
 		@Override
         public void swipeDownFunc() {
-            if(MyMapBuilder.ShiftMap(0, -1)) {
+            if(MyMapBuilder.moveHero(0, -1)) {
 
-            MyMapBuilder.DrawMapWithOutDelay();
+            drawView.DrawMapWithOutDelay();
 			}
         }
 		
@@ -95,17 +95,19 @@ public void swipeUpFunc() {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_my);
 
+		//Create new MapBuilder.
+        MyMapBuilder = new MapBuilder();
+
 		//Get main drawing view.
         drawView = (DrawingView)findViewById(R.id.drawing);
 
+		drawView.setMapBuilder(MyMapBuilder);
+		
        // LinearLayout paintLayout = (LinearLayout)findViewById(R.id.paint_colors);
 
        // currPaint = (ImageButton)paintLayout.getChildAt(0);
        // currPaint.setImageDrawable(getResources().getDrawable(R.drawable.paint_pressed));
 
-
-		//Create new MapBuilder.
-        MyMapBuilder = new MapBuilder(drawView);
 
 
 		drawView.setOnTouchListener(new OnSwipeTouchListener(MyActivity.this));
@@ -127,7 +129,7 @@ public void swipeUpFunc() {
             //currPaint=(ImageButton)view;
 
             MyMapBuilder.BuildMap();
-        MyMapBuilder.DrawMapWithDelay();
+        drawView.DrawMapWithDelay();
 
     }
 

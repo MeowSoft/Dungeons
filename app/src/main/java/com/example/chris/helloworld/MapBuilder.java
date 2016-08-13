@@ -2,8 +2,9 @@ package com.example.chris.helloworld;
 
 import android.os.Handler;
 
+import java.util.LinkedList;
 import java.util.Random;
-
+import java.util.Iterator;
 /**
  * Created by Chris on 7/31/2016.
  */
@@ -13,110 +14,180 @@ import java.util.Random;
 
 public class MapBuilder {
 	
+	//{ Private members: =======================================================
 
 	
-	
-    private static final int MAP_X_SIZE = 31;
-    private static final int MAP_Y_SIZE = 31;
-	
-    private static final int MAP_X_DRAW_SIZE = 10;
-    private static final int MAP_Y_DRAW_SIZE = 10;
-
-
-    private int BuildX;
-    private int BuildY;
-
-
-	//An array that will contain the map room objects.
-    private MapRoom[][] Map;
-    private DrawingView MyView;
-
-    public MapBuilder(DrawingView NewView) {
-
-       Map = new MapRoom[MAP_X_SIZE][MAP_Y_SIZE];
-        MyView = NewView;
-
-        BuildX = MAP_X_SIZE / 2;
-        BuildY = MAP_Y_SIZE / 2;
 		
+		private static final int MAP_SIZE = 31;
+		private static final int MAP_X_SIZE = 31;
+		private static final int MAP_Y_SIZE = 31;
+		
+		private static final int MAP_X_DRAW_SIZE = 10;
+		private static final int MAP_Y_DRAW_SIZE = 10;
 
+		private static final int ROOM_DENSITY = 25;
+		
+		private Random rollDice;
+
+		private int heroX;
+		private int heroY;
+		
+		private int enemyChance = 90;
+		
+		private LinkedList<MapEnemy> myEnemies;
+		
+		private int exitX;
+		private int exitY;
+		
+		//An array that will contain the map room objects.
+		private MapRoom[][] Map;
+		//private DrawingView MyView;
+	
+	//} ------------------------------------------------------------------------
+	
+	//{ Constructors: ==========================================================
+
+	//{ ------------------------------------------------------------------------
+	//|
+	//| This constructor creates a new array of room objects that will
+	//|	represent the dungeon. The 
+	//|
+	//| ------------------------------------------------------------------------
+    public MapBuilder() {
+
+		Map = new MapRoom[MAP_SIZE][MAP_SIZE];
+        //MyView = NewView;
+
+		rollDice = new Random();
+		
+        heroX = MAP_SIZE / 2;
+        heroY = MAP_SIZE / 2;
+		
+		myEnemies = new LinkedList<MapEnemy>();
 
     }
 
-    public void BuildMap() {
+	//{ BuildMap ---------------------------------------------------------------
+	//|
+    public void BuildMap(){
 
-        int CurrX;
-        int CurrY;
+		//Map room coordinates.
+        int mapX;
+        int mapY;
 
-        int DelCount;
+		//Loop counters.
         int x;
-		int Check;
-
-		MapRoom NewRoom;
-		
-		Random Rgen = new Random();
-		
         int y;
-        int DirFlip;
-        CurrX = MAP_X_SIZE / 2;
-        CurrY = MAP_Y_SIZE / 2;
-
-DelCount = 20;
- 
-		Map[CurrX][CurrY] = new MapRoom(true);
-
-        DirFlip = 1;
-
-		int MapDim = 30;
 		
-		boolean setroom;
+		//Var to increment / decrement map coordinates.
+		int DirFlip;
+
+		//Calc vars.
+		int temp;
+		boolean setRoom;
 		
-        for(x = 0; x < MapDim; x++) {
-
-            for (y = 0; y <=  x; y++){
-			
-				
-                CurrX += DirFlip;
-				
-				setroom = _GenerateRoom(CurrX, CurrY, Rgen);
-				Map[CurrX][CurrY] = new MapRoom(setroom);
-				
-				
-            }
-
-	
-            for(y = 0; y <= x; y++){
-				
-				
-                CurrY += DirFlip;
-				
-				setroom = _GenerateRoom(CurrX, CurrY, Rgen);
-				
-				Map[CurrX][CurrY] = new MapRoom(setroom);
-				
-            }
-
-            DirFlip *= -1;
-			
-        }
+		//Vars to make sure we generate a map with a reasonable number of
+		//rooms.
+		int roomCount;
+		int minRoomCount;
 		
-		  for (y = 0; y < x; y++){
-			
-				
-                CurrX += DirFlip;
-				
-				setroom = _GenerateRoom(CurrX, CurrY, Rgen);
-			
-				Map[CurrX][CurrY] = new MapRoom(setroom);
-				
-            }
+		//Vars to get random map coordinates.
+		int rollX;
+		int rollY;
 		
+		//Calculate minimum number of rooms we need.
+		minRoomCount = (((MAP_SIZE * MAP_SIZE) * ROOM_DENSITY) / 100);
+		
+		do {
+		
+			//Erase map.
+			for(x = 0; x < MAP_SIZE; x++) {
+			for(y = 0; y < MAP_SIZE; y++) {
+				Map[x][y] = null;
+			}}
+		
+			//Start in the center of the map.
+			mapX = MAP_SIZE / 2;
+			mapY = mapX;
+
+			//Center is always a room.
+			Map[mapX][mapY] = new MapRoom(true);
+			
+			//Init room count.
+			roomCount = 1;
+			
+			//Start moving in +x +y dir.
+			DirFlip = 1;
+
+			//For all coordinates on map edge...
+			for(x = 0; x < MAP_SIZE; x++) {
+
+				//Create horizontal rooms.
+				for (y = 0; y < x; y++){
+					mapX += DirFlip;
+					Map[mapX][mapY] = _GenerateRoom(mapX, mapY);
+				
+					
+					//Add to room count.
+					if(Map[mapX][mapY].CheckIsRoom())
+						roomCount++;
+				}
+
+				//This is so we don't create an extra room on the last leg of
+				//the spiral.
+				temp = (x == (MAP_SIZE - 1)) ? (x - 1) : x;
+				
+				//Create vertical rooms.
+				for(y = 0; y <= temp; y++){
+					mapY += DirFlip;
+					Map[mapX][mapY] = _GenerateRoom(mapX, mapY);
+			
+					
+					//Add to room count.
+					if(Map[mapX][mapY].CheckIsRoom())
+						roomCount++;
+				}
+
+				//Reverse direction.
+				DirFlip *= -1;
+			}
+		
+		//Go until we have a reasonable map.
+		} while(roomCount < minRoomCount);
+		
+		do {
+			
+			//Roll for entrance coordinates.
+			rollX = rollDice.nextInt(MAP_SIZE);
+			rollY = rollDice.nextInt(MAP_SIZE);
+			
+		//Until entrance is a valid room.
+		} while(!Map[rollX][rollY].CheckIsRoom());
+		
+		//Place hero at dungeon entrance.
+		heroX = rollX;
+		heroY = rollY;
+		
+		do {
+			
+			//Roll for exit coordinates.
+			rollX = rollDice.nextInt(MAP_SIZE);
+			rollY = rollDice.nextInt(MAP_SIZE);
+			
+		//Until exit is a valid room.
+		} while(!Map[rollX][rollY].CheckIsRoom());
+		
+		//Set exit coordinates.
+		exitX = rollX;
+		exitY = rollY;
+		
+    } //} ----------------------------------------------------------------------
 
 
-    }
-
-
-    private boolean _GenerateRoom(int MapX, int MapY, Random RGen) {
+    private MapRoom _GenerateRoom(
+		int 	mapX,
+		int 	mapY
+	){
 
   
 		int Count;
@@ -133,236 +204,168 @@ DelCount = 20;
 		boolean Horiz;
 		boolean All;
 		
-		boolean RetVal;
+		MapRoom result;
 		
 		int Mult;
 		
+		boolean check;
+		
 		MapRoom MyMaproom;
-		
-		MyMaproom = (MapY > 0)? Map[MapX][(MapY - 1)] : null;
-		
+		MapEnemy myRoomEnemy;
+
+		//Check if map coordinates above current location is a room.
+		MyMaproom = (mapY > 0)? Map[mapX][(mapY - 1)] : null;
         Top = (MyMaproom != null)? MyMaproom.CheckIsRoom() : false;
 		
-		MyMaproom = (MapX > 0)? Map[(MapX - 1)][MapY] : null;
+		//Check if map coordinates to the left of current location is a room.
+		MyMaproom = (mapX > 0)? Map[(mapX - 1)][mapY] : null;
         Left = (MyMaproom != null)? MyMaproom.CheckIsRoom() : false;
 		
-		MyMaproom = (MapY < (MAP_Y_SIZE - 1))? Map[MapX][(MapY + 1)] : null;
+		//Check if map coordinates below current location is a room.
+		MyMaproom = (mapY < (MAP_SIZE - 1))? Map[mapX][(mapY + 1)] : null;
         Bottom = (MyMaproom != null)? MyMaproom.CheckIsRoom() : false;
 		
-		
-		MyMaproom = (MapX < (MAP_X_SIZE - 1))? Map[(MapX + 1)][MapY] : null;
+		//Check if map coordinates to the right of current location is a room.
+		MyMaproom = (mapX < (MAP_SIZE - 1))? Map[(mapX + 1)][mapY] : null;
         Right = (MyMaproom != null)? MyMaproom.CheckIsRoom() : false;
 
+		//Check if there are rooms to the left and right.
 		Horiz = (Left && Right);
+		
+		//Check if there are rooms above and below.
 		Vert = (Top && Bottom);
+		
+		//Check if there are rooms all around.
 		All = (Horiz && Vert);
 		
-		Mult =	All ? 95 : 
-				Horiz ? 80 :
-				Vert ? 80 :
-				(Top && Left) ? 70 :
-				(Top && Right) ? 70 :
-				(Bottom && Left) ? 70 :
-				(Bottom && Right) ? 70 :
-				Top ? 65 :
-				Left ? 65 :
-				Bottom ? 65 : 
-				Right ? 65 : 0;
+		//Get probability for a room based on surrounding rooms.
+		Mult =	All ? 					95 :
+				Horiz ? 				80 :
+				Vert ? 					80 :
+				(Top && Left) ? 		70 :
+				(Top && Right) ? 		70 :
+				(Bottom && Left) ? 		70 :
+				(Bottom && Right) ? 	70 :
+				Top ? 					65 :
+				Left ? 					65 :
+				Bottom ? 				65 : 
+				Right ? 				65 : 
+										0;
 		
-		RetVal = false;
+		//Init return.
+		check = false;
 		
-		if(Mult > RGen.nextInt(100)) {
-					RetVal = true;
-				}
+		//Roll for a room.
+		check = (Mult > rollDice.nextInt(100));
 		
-	return(RetVal);
+		
+		result = new MapRoom(check);
+		
+		result.SetEnemy(false);
+		if(check) {
+			
+			if(rollDice.nextInt(100) > enemyChance) {
+				myRoomEnemy = new MapEnemy(mapX, mapY, rollDice);
+				myEnemies.add(myRoomEnemy);
+				result.SetEnemy(true);
+			}
+		}
+		
+		
+		
+		//Return the result.
+		return(result);
 	
-
 	}
 			
 		
-		public boolean ShiftMap(int MoveX, int MoveY) {
+		public boolean moveHero(int MoveX, int MoveY) {
 			
 			boolean result = false;
 			
-			if((MoveX > 0) && (BuildX < (MAP_X_SIZE - 1))) {
+			if((MoveX > 0) && (heroX < (MAP_SIZE - 1))) {
 
-				if(_CheckRoom((BuildX + 1), BuildY)) {
-					BuildX++;
+				if(_myCheckRoom((heroX + 1), heroY)) {
+					heroX++;
 					result = true;
 				}
 			}
 			
-			else if((MoveX < 0) && (BuildX > 0)) {
+			else if((MoveX < 0) && (heroX > 0)) {
 
-				if(_CheckRoom((BuildX - 1), BuildY)) {
-					BuildX--;
+				if(_myCheckRoom((heroX - 1), heroY)) {
+					heroX--;
 					result = true;
 				}
 			}
 			
-			else if((MoveY > 0) && (BuildY < (MAP_Y_SIZE - 1))) {
+			else if((MoveY > 0) && (heroY < (MAP_SIZE - 1))) {
 
-				if(_CheckRoom(BuildX, (BuildY + 1))) {
-					BuildY++;
+				if(_myCheckRoom(heroX, (heroY + 1))) {
+					heroY++;
 					result = true;
 				}
 			}
 			
-			else if((MoveY < 0) && (BuildY > 0)) {
+			else if((MoveY < 0) && (heroY > 0)) {
 
-				if(_CheckRoom(BuildX, (BuildY - 1))) {
-					BuildY--;
+				if(_myCheckRoom(heroX, (heroY - 1))) {
+					heroY--;
 					result = true;
 				}
 			}
 			
+			moveEnemies();
 			
 			return(result);
 		}
 		
-	private int MyDelay;
-	
-	private void _DrawMap( DrawRoomFunc DF) {
-	
-		int x;
-		int y;
-		
-		int MyX;
-		int MyY;
-		int DirFlip;
-		int DelCount = 20;
-		
-
-		
-		int myEdgeDim;
-		DirFlip = 1;
-
-	MyDelay = 20;
-	MyX = BuildX;
-	MyY = BuildY;
-	
-	int viewX;
-	int viewY;
-	boolean roomcheck;
-
-	int myMapDim = MyView.getMapDim();
-	//if((myMapDim % 2) != 0) { myMapDim++; }
-	myMapDim--;
-	int offset = myMapDim / 2;
-		
-	
-	viewX = offset;
-	viewY = offset;
-	myEdgeDim = viewX;
-	int temp;
-	MyView.EraseMap();
-	
-		//Draw center room.
-		DF.func(viewX, viewY, Map[MyX][MyY].CheckIsRoom(), DelCount, true);
-	
-        for(x = 0; x <= myMapDim; x++) {
-
-            for (y = 0; y <  x; y++){
+		public void moveEnemies() {
 			
-				
-                MyX += DirFlip;
-				viewX+= DirFlip;
-				
-                DF.func(viewX, viewY, _CheckRoom(MyX, MyY), DelCount, false);
-            }
+			Iterator listWalker = myEnemies.iterator();
+			
+			while(listWalker.hasNext()) {
 
-	temp = (x == myMapDim) ? (x - 1) : x;
-            for(y = 0; y <= temp; y++){
-				
-				
-                MyY += DirFlip;
-				viewY += DirFlip;
-				
-				
-                DF.func(viewX, viewY, _CheckRoom(MyX, MyY), DelCount, false);
-            }
+				((MapEnemy) listWalker.next()).move(rollDice, this);
+
+			}
 			
-            DirFlip *= -1;
-			
-        }
+		}
 		
+		public boolean _myCheckRoom(int myx, int myy) {
+			
+			boolean result;
+			result = false;
+			if((myx >= 0) && (myx < MAP_SIZE) && (myy >= 0) && (myy < MAP_SIZE))
+					result = Map[myx][myy].CheckIsRoom();
+			return(result);
+		}
+		
+		public MapRoom GetRoom(int mapX, int mapY) {
+			
+		return(Map[mapX][mapY]);
+		}
 	
 
 	
-	}
-	
-	private boolean _CheckRoom(int RoomX, int RoomY) {
+	public boolean _CheckRoom(int RoomX, int RoomY) {
 		
 		boolean result;
 		
 		result = false;
-		if((RoomX < MAP_X_SIZE) && (RoomY < MAP_Y_SIZE) && (RoomX >= 0) && (RoomY >= 0)) result = Map[RoomX][RoomY].CheckIsRoom();
+		if(((RoomX + heroX) < MAP_SIZE) && ((RoomY + heroY) < MAP_SIZE) && ((RoomX + heroX) >= 0) && ((RoomY + heroY) >= 0)) result = Map[(RoomX + heroX)][(RoomY + heroY)].CheckIsRoom();
 		return(result);
 	}
 		
-	
-	interface DrawRoomFunc {
-		int func(final int RoomX, final int RoomY, final boolean room, int Delay, boolean ctr);
-	}
-	
-	public void DrawMapWithDelay() {
-		_DrawMap(new DrawRoomFunc() {
-		
-    public int func(final int RoomX, final int RoomY, final boolean room, int Delay, final boolean ctr) {
-
-        final Handler handler = new Handler();
-
-		int DelCalc;
-		
-		DelCalc = 2500 - (MyDelay * 10);
-		DelCalc /= 100;
-
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                // Do something after 5s = 5000ms
-                MyView.DrawRoom(RoomX, RoomY,  room, ctr);
-            }
-        }, MyDelay);
-
-		MyDelay = MyDelay + DelCalc;
-		
-        return(Delay + DelCalc);
-
-		} } );
+	public boolean _RoomHasEnemy(int roomX, int roomY) {
+		boolean result;
+		result = false;
+		if(((roomX + heroX) < MAP_SIZE) && ((roomY + heroY) < MAP_SIZE) && ((roomX + heroX) >= 0) && ((roomY + heroY) >= 0)) {
+		result = Map[roomX + heroX][roomY + heroY].CheckHasEnemy();
+		}
+		return(result);
 	}
 
-	//{ DrawMapWithOutDelay ====================================================
-	//|
-	//|	Draw map without delay between rooms.
-	//|
-	//|	Results:
-	//|
-	//|		The viewable map area is drawn instantly.
-	//|
-	//| ------------------------------------------------------------------------
-	public void DrawMapWithOutDelay() {
-		
-		
-		_DrawMap(new DrawRoomFunc() {
-			
-			public int func(
-				final int RoomX,
-				final int RoomY,
-				final boolean room,
-				int Delay,
-				boolean ctr
-			){
-
-                //Draw the room.
-                MyView.DrawRoom(RoomX, RoomY,  room, ctr);
-        
-
-        return(0);
-
-		} } );
-	}
 	
 }
 
@@ -370,9 +373,8 @@ DelCount = 20;
 class MapRoom {
 	
 	boolean IsRoom;
-	
+	boolean HasEnemy;
 
-	
 	MapRoom(boolean SetIsRoom) {
 		
 		IsRoom = SetIsRoom;
@@ -382,7 +384,58 @@ class MapRoom {
 		return(IsRoom);
 	}
 	
+	public void
+	SetEnemy(boolean set) {
+		HasEnemy = set;
+	}
+	
+	public boolean CheckHasEnemy(){
+		return(HasEnemy);
+	}
 }
 
+class MapEnemy {
 	
+	private static int MAX_ENEMY_HEALTH = 5;
 	
+	int myMapX;
+	int myMapY;
+	
+	int myHealth;
+	
+	MapEnemy(int mapX, int mapY, Random rollForHealth) {
+		
+		myMapX = mapX;
+		myMapY = mapY;
+		
+		myHealth = rollForHealth.nextInt(MAX_ENEMY_HEALTH);
+		
+	}
+	
+	public void move(Random rollForMove, MapBuilder myMapBulder) {
+		
+		int temp;
+		
+		temp = rollForMove.nextInt(10);
+		
+		
+		
+		if(temp > 5) {
+			
+			myMapBulder.GetRoom(myMapX, myMapY).SetEnemy(false);
+			if((temp == 6) && myMapBulder._myCheckRoom((myMapX + 1), myMapY))
+				myMapX++;
+			else if((temp == 7) && myMapBulder._myCheckRoom(myMapX, (myMapY + 1)))
+				myMapY++;
+			else if((temp == 8) && myMapBulder._myCheckRoom((myMapX - 1), myMapY))
+				myMapX--;
+			else if((temp == 9) && myMapBulder._myCheckRoom(myMapX, (myMapY - 1)))
+				myMapY--;
+			
+		myMapBulder.GetRoom(myMapX, myMapY).SetEnemy(true);
+		}
+		
+		
+	}
+	
+}

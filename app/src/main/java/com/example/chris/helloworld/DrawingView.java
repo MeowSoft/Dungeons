@@ -11,7 +11,6 @@
 //| ----------------------------------------------------------------------------
 
 package com.example.chris.helloworld;
-
 import android.content.Context;
 import android.graphics.Color;
 import android.os.SystemClock;
@@ -23,27 +22,45 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.view.MotionEvent;
+import android.os.Handler;
 
 public class DrawingView extends View  {
 
 	//{ Private members: =======================================================
 
-		//drawing and canvas paint
+		//Number of rooms square to draw in the map view.
+		private static final int MAP_DRAW_SIZE = 9;
+		
+		//Width of border between rooms in pixels.
+		private static final int MAP_GRID_BORDER_SIZE = 5;
+		
+		//Total length of time to take drawing the view in 'DrawMapWithDelay'.
+		private static final int SPIRAL_DRAW_MAX_TIME = 2500;
+
+		//Paint for drawing stuff.
 		private Paint drawPaint;
 
-		//canvas
+		//Canvas and bitmap to draw to.
 		private Canvas drawCanvas;
-
-		//canvas bitmap
 		private Bitmap canvasBitmap;
 
-		private static final int MAP_DRAW_SIZE = 9;
-		private static final int MAP_GRID_BORDER_SIZE = 5;
-
-		private int RoomSize;
+		//Var to get width and height of a room in pixels.
+		private int roomSize;
 		
+		//Parent context.
 		private Context myContext;
 		
+		//Reference to the map builder object.
+		private MapBuilder myMapBuilder;
+		
+		//Var to delay between drawing rooms in 'DrawMapWithDelay'.
+		private int drawDelay;
+	
+		//Interfacce to define a function to draw a room.
+		private interface drawRoomFunc {
+			void func(final int roomX, final int roomY);
+		}
+	
 	//} ------------------------------------------------------------------------
 	
 	//{ Constructors: ==========================================================
@@ -63,9 +80,9 @@ public class DrawingView extends View  {
         super(context, attributes);
 		
 		myContext = context;
-		
+
 		//Set up canvas.
-        setupDrawing();
+        _setupDrawing();
 		
     } //} ----------------------------------------------------------------------
 	
@@ -100,7 +117,7 @@ public class DrawingView extends View  {
         drawCanvas = new Canvas(canvasBitmap);
 		
 		//Set roomsize based on new canvas width.
-		RoomSize = (drawCanvas.getWidth() / MAP_DRAW_SIZE);
+		roomSize = (drawCanvas.getWidth() / MAP_DRAW_SIZE);
 		
     } //} ----------------------------------------------------------------------
 	
@@ -126,7 +143,7 @@ public class DrawingView extends View  {
 
 	//{ Private methods: =======================================================
 	
-	//{ setupDrawing -----------------------------------------------------------
+	//{ _setupDrawing ----------------------------------------------------------
 	//|
 	//|	Set up the drawing area.
 	//|
@@ -135,7 +152,7 @@ public class DrawingView extends View  {
 	//|		A new Paint object is created and its attributes are set.
 	//|
 	//| ------------------------------------------------------------------------
-    private void setupDrawing(){
+    private void _setupDrawing(){
 
         //Create paint object.
         drawPaint = new Paint();
@@ -149,32 +166,32 @@ public class DrawingView extends View  {
 
     } //} ----------------------------------------------------------------------
 	
-	//} ------------------------------------------------------------------------
-
-	//{ Public methods: ========================================================
-	
-	//{ getMapDim --------------------------------------------------------------
+	//{ _eraseMap --------------------------------------------------------------
 	//|
-	//|	Return the dimensions of the viewable map area in number of rooms.
-	//|
-	//|	Returns:
-	//|
-	//|		int
-	//|		The size of the viewable map area in rooms.
+	//|	Erase the view.
 	//|
 	//|	Results:
 	//|
-	//|		The square viewing area number of map rooms to display is returned.
+	//|		Erases the currently drawn map view.
 	//|
 	//| ------------------------------------------------------------------------
-	public int getMapDim() {
+    private void _eraseMap(){
+
+		//Var to select erase color.
+		int eraseColor;
 		
-		//Return draw size.
-		return(MAP_DRAW_SIZE);
+		//Get erase color.
+		eraseColor = ContextCompat.getColor(myContext, R.color.mapBackgroundColor);
+
+		//Erase the view.
+        drawCanvas.drawColor(eraseColor);
 		
-	} //} ----------------------------------------------------------------------
-	
-	//{ DrawRoom ---------------------------------------------------------------
+		//Redraw.
+        invalidate();
+		
+    } //} ----------------------------------------------------------------------
+
+	//{ _drawRoom --------------------------------------------------------------
 	//|
 	//| Draw a map room to the view.
 	//|
@@ -190,29 +207,27 @@ public class DrawingView extends View  {
 	//|		The room is drawn to the view.
 	//|
 	//| ------------------------------------------------------------------------
-    public void DrawRoom(
+    private void _drawRoom(
 		int 		RoomX,
-		int 		RoomY,  
-		boolean 	isRoom,
-		boolean 	ctr
+		int 		RoomY
 	){
 		//Vars to calculate pixel coordinates of room to draw.
-        int PixX;
-        int PixY;
+        int pixX;
+        int pixY;
 
 		//Var to select room color.
 		int roomColor;
 		
 		//Get pixel coordinates for room.
-        PixX = ((RoomX) * RoomSize);
-        PixY = ((RoomY) * RoomSize);
+        pixX = ((RoomX + (MAP_DRAW_SIZE / 2)) * roomSize);
+        pixY = ((RoomY + (MAP_DRAW_SIZE / 2)) * roomSize);
 		
 		//Default to no room color.
 		roomColor = ContextCompat.getColor(myContext, R.color.noRoomColor);
 		drawPaint.setColor(roomColor);
 		
 		//If we are drawing a room...
-		if(isRoom) {
+		if(myMapBuilder._CheckRoom(RoomX, RoomY)) {
 			
 			//Set room color.
 			roomColor = ContextCompat.getColor(myContext, R.color.roomColor);
@@ -221,53 +236,210 @@ public class DrawingView extends View  {
 		
 		//Draw the room.
         drawCanvas.drawRect(
-			PixX,
-			PixY,
-			(PixX + RoomSize - MAP_GRID_BORDER_SIZE),
-			(PixY + RoomSize - MAP_GRID_BORDER_SIZE),
+			pixX,
+			pixY,
+			(pixX + roomSize - MAP_GRID_BORDER_SIZE),
+			(pixY + roomSize - MAP_GRID_BORDER_SIZE),
 			drawPaint
 		);
 		
 		//If this is the room in the center of the view...
-		if(ctr) {
+		if((RoomX == 0) && (RoomY == 0)) {
 			
 			//Draw character.
 			drawPaint.setStyle(Paint.Style.STROKE);
 			drawPaint.setColor(Color.parseColor("Green"));
-			drawCanvas.drawRect(PixX, PixY, (PixX + RoomSize - MAP_GRID_BORDER_SIZE), (PixY + RoomSize - MAP_GRID_BORDER_SIZE), drawPaint );
+			drawCanvas.drawRect(
+				pixX,
+				pixY,
+				(pixX + roomSize - MAP_GRID_BORDER_SIZE),
+				(pixY + roomSize - MAP_GRID_BORDER_SIZE),
+				drawPaint
+			);
+
 			drawPaint.setStyle(Paint.Style.FILL_AND_STROKE);
 		}
+		
+		if(myMapBuilder._RoomHasEnemy(RoomX, RoomY)) {
+			drawPaint.setColor(Color.parseColor("Blue"));
+			drawCanvas.drawCircle((pixX + (roomSize / 2)), (pixY + (roomSize / 2)), ((roomSize / 2) - 10), drawPaint);
+		}
+		
+    } //} ----------------------------------------------------------------------
+
+	//{ _drawMap ---------------------------------------------------------------
+	//|
+	//|	Draw the viewable area of the map to the screen.
+	//|
+	//|	Function parameters:
+	//|
+	//|		drawFunc
+	//|		A drawRoomFunc interface instance to draw a map room.
+	//|
+	//|	Results:
+	//|
+	//|		This function will draw a section of the dungeon map to the view.
+	//|		The map will be drawn from the center outward in a spiral pattern.
+	//|		
+	//| ------------------------------------------------------------------------
+	private void _drawMap(
+		drawRoomFunc drawFunc
+	){
+		//Loop counters.
+		int x;
+		int y;
+		
+		//Vars to get map rooms.
+		int mapX;
+		int mapY;
+		
+		//Var to increment map room coordinates.
+		int DirFlip;
+
+		//Calc var.
+		int temp;
+		
+		//Start moving in the +x +y direction.
+		DirFlip = 1;
+
+		//Init local map coordinates.
+		mapX = 0;
+		mapY = 0;
+	
+		//Erase current map view.
+		_eraseMap();
+	
+		//Draw center room.
+		drawFunc.func(mapX, mapY);
+	
+		//For each loop spiraling out from the view center...
+        for(x = 0; x < MAP_DRAW_SIZE; x++) {
+
+			//Draw horizontal rooms.
+            for (y = 0; y < x; y++){
+                mapX += DirFlip;
+                drawFunc.func(mapX, mapY);
+            }
+
+			//This is so we don't draw an extra room on the last leg of
+			//the spiral.
+			temp = (x == (MAP_DRAW_SIZE - 1)) ? (x - 1) : x;
+			
+			//Draw vertical rooms.
+            for(y = 0; y <= temp; y++){
+                mapY += DirFlip;
+                drawFunc.func(mapX, mapY);
+            }
+			
+			//Reverse direction.
+            DirFlip *= -1;
+        }
 		
 		//Redraw view.
         invalidate();
 		
-    } //} ----------------------------------------------------------------------
-
-	//{ EraseMap ---------------------------------------------------------------
+	} //} ----------------------------------------------------------------------
+	
+	//} ------------------------------------------------------------------------
+	
+	//{ Public methods: ========================================================
+	
+	//{ DrawMapWithDelay -------------------------------------------------------
 	//|
-	//|	Erase the view.
+	//| Draw map with a delay between rooms.
 	//|
 	//|	Results:
 	//|
-	//|		Erases the view. Call this before redrawing after the map has
-	//|		moved.
+	//|		The map is drawn from the center outwards in a spiral with a 
+	//|		delay between each room so we can see the spiral effect.
 	//|
 	//| ------------------------------------------------------------------------
-    public void EraseMap() {
-
-		//Var to select erase color.
-		int eraseColor;
+	public void DrawMapWithDelay(){
 		
-		//Get erase color.
-		eraseColor = ContextCompat.getColor(myContext, R.color.mapBackgroundColor);
+		//Set up an instance of drawRoomFunc that draws a room after a short
+		//delay.
+		drawRoomFunc myDrawFunc = new drawRoomFunc() {
+			public void func(
+				final int roomX, 
+				final int roomY
+			){
+				//Delay handler.
+				final Handler handler = new Handler();
 
-		//Erase the view.
-        drawCanvas.drawColor(eraseColor);
+				//Var to calculate delay time.
+				int DelCalc;
+				
+				//Create a runnable to draw a map room.
+				Runnable delayDraw = new Runnable() {
+					@Override
+					public void run() {
+						
+						//Draw room.
+						_drawRoom(roomX, roomY);
+						
+						//Redraw view.
+						invalidate();
+					}
+				};
+				
+				//Calculate remaining delay for this room.
+				DelCalc = (SPIRAL_DRAW_MAX_TIME - (drawDelay * 10));
+				DelCalc /= 100;
+
+				//Send room draw to handler.
+				handler.postDelayed(delayDraw, drawDelay);
+
+				//Update delay.
+				drawDelay = (drawDelay + DelCalc);
+			}
+		};
 		
-		//Redraw.
+		//Init delay.
+		drawDelay = 20;
+		
+		//Call _drawMap with the delayed function.
+		_drawMap(myDrawFunc);
+		
+	} //} ----------------------------------------------------------------------
+
+	//{ DrawMapWithOutDelay ----------------------------------------------------
+	//|
+	//|	Draw map without delay between rooms.
+	//|
+	//|	Results:
+	//|
+	//|		The viewable map area is drawn instantly.
+	//|
+	//| ------------------------------------------------------------------------
+	public void DrawMapWithOutDelay(){
+		
+		//Set up an instance of drawRoomFunc that just draws a room.
+		drawRoomFunc myDrawFunc = new drawRoomFunc() {
+			public void func(
+				final int roomX,
+				final int roomY
+			){
+                _drawRoom(roomX, roomY);
+			} 
+		};
+		
+		//Call _drawMap with the simple function.
+		_drawMap(myDrawFunc);
+		
+		//Redraw view.
         invalidate();
 		
-    } //} ----------------------------------------------------------------------
+	} //} ----------------------------------------------------------------------
+	
+	
+	
+	
+	public void setMapBuilder(
+	
+		MapBuilder theMapBuilder
+	){
+		myMapBuilder = theMapBuilder;
+	}
 
 	//} ------------------------------------------------------------------------
 	
