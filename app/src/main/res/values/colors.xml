@@ -9,7 +9,8 @@
 	
 	<!-- Other colors: -->
 	<color name="noRoomColor">#FF000000</color>
-	<color name="roomColor">#FFFF0000</color>
+	<color name="roomColor">#FF334455</color>
 	<color name="mapBackgroundColor">#FF888888</color>
+	<color name="mapExitColor">#FFAA3344</color>
 	
 </resources>

@@ -1,15 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+
 <resources>
+
     <string name="app_name">Dungeons \'n such</string>
-    <string name="edit_message">Enter somethin\' fool!</string>
-    <string name="button_send">Send that shit!</string>
-    <string name="action_settings">Settings</string>
-    <string name="title_activity_display_message">My new Message</string>
-
-
-    <string name="start_new">New</string>
-    <string name="brush">Brush</string>
-    <string name="erase">Erase</string>
-    <string name="save">Save</string>
-    <string name="paint">Paint</string>
-
+    <string name="title_banner">Title banner</string>
+	<string name="enemy_alert">A wild ENEMY appears!</string>
+	<string name="fight_button_text">Fight!</string>
+	<string name="generate_button_text">Generate dungeon.</string>
+	<string name="winner_alert">A winner is you!</string>
+	<string name="new_map_query">Generate new dungeon?</string>
+	<string name="intro_copy">
+		Dungeon generator project By Chris Estes. \n
+		Touch and hold map area for new dungeon.
+	</string>
+	<string name="i_win_yay">OMFG YAY!</string>
+	<string name="button_yes">Yes</string>
+	<string name="button_no">No</string>
+	<string name="button_ok">Ok</string>
+	
 </resources>
+

@@ -1,60 +1,129 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+
+<LinearLayout 
+	xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
 
+    android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FF888888"
-    android:orientation="vertical"
+    android:background="#FF000000"
     tools:context=".MyActivity" >
 
-
+	<!-- Title banner image layout: -->
     <LinearLayout
         android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="84dp"
-        android:layout_gravity="center_horizontal"
-        android:background="@color/abc_input_method_navigation_guard">
+        android:background="@color/abc_input_method_navigation_guard"
+        android:layout_gravity="center_horizontal">
 
-
+		<!-- Banner image: -->
         <ImageView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:id="@+id/imageView"
             android:layout_gravity="center_horizontal"
-            android:src="@drawable/apptitle13"
             android:adjustViewBounds="false"
-            android:cropToPadding="false" />
+            android:cropToPadding="false"
+            android:contentDescription="@string/title_banner"
+            android:src="@drawable/apptitle13"
+            android:id="@+id/imageView" />
+
     </LinearLayout>
 
-    <com.example.chris.helloworld.DrawingView
-        android:id="@+id/drawing"
-        android:layout_width="fill_parent"
-        android:layout_height="0dp"
-        android:layout_marginBottom="5dp"
-        android:layout_marginLeft="5dp"
-        android:layout_marginRight="5dp"
-        android:layout_marginTop="5dp"
-        android:layout_weight="1"
-        android:background="#FF888888"
-        />
-
-
+	<!-- Dungeon map view layout: -->
     <LinearLayout
-        android:layout_width="fill_parent"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:orientation="vertical" >
+        android:layout_weight="1">
 
-   
-    <Button
-        android:layout_width="fill_parent"
-        android:layout_height="100dp"
-        android:text="Generate Dungeon"
-        android:id="@+id/button" android:onClick="paintClicked" />
-
-
+		<!-- View to draw dungeon map to: -->
+        <com.example.chris.helloworld.DrawingView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:background="#FF888888"
+            android:layout_marginBottom="5dp"
+            android:layout_marginLeft="5dp"
+            android:layout_marginRight="5dp"
+            android:layout_marginTop="5dp"
+            android:id="@+id/drawing"/>
+			
     </LinearLayout>
 
+	<!-- Control buttons layout: -->
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="fill_parent"
+        android:layout_height="160dp"
+        android:layout_gravity="center"
+		android:id="@+id/buttons_layout">
+
+		<!-- Left side buttons: -->
+		<LinearLayout
+			android:orientation="vertical"
+			android:layout_width="120dp"
+			android:layout_height="fill_parent"
+			android:id="@+id/buttons_left_layout">
+
+			<!-- Left button: -->
+			<Button
+				android:layout_width="120dp"
+				android:layout_height="0dp"
+				android:background="@drawable/left_arrow"
+				android:onClick="leftClicked"
+				android:layout_weight="1" 
+				android:id="@+id/left_button"/>
+
+			<!-- Right button: -->
+			<Button
+				android:layout_width="120dp"
+				android:layout_height="0dp"
+				android:background="@drawable/right_arrow"
+				android:onClick="rightClicked"
+                android:layout_weight="1"
+				android:id="@+id/right_button"/>
+
+		</LinearLayout>
+
+		<!-- Fight button -->
+		<Button
+			android:layout_width="wrap_content"
+			android:layout_height="fill_parent"
+			android:text="@string/fight_button_text"
+			android:onClick="fightClicked"
+			android:visibility="invisible"
+            android:layout_weight="1"
+			android:id="@+id/fightbutton"/>
+
+		<!-- Right side buttons: -->
+		<LinearLayout
+			android:orientation="vertical"
+			android:layout_width="120dp"
+			android:layout_height="fill_parent"
+			android:id="@+id/buttons_bottom_layout">
+
+			<!-- Up button: -->
+			<Button
+				android:layout_width="120dp"
+				android:layout_height="0dp"
+				android:background="@drawable/up_arrow"
+				android:onClick="upClicked"
+				android:layout_weight="1" 
+				android:id="@+id/up_button"/>
+
+				<!-- Down button: -->
+			<Button
+				android:layout_width="120dp"
+				android:layout_height="0dp"
+				android:background="@drawable/down_arrow"
+				android:onClick="downClicked"
+				android:layout_weight="1"
+				android:id="@+id/down_button" />
+
+		</LinearLayout>
+
+	</LinearLayout>
 
 </LinearLayout>
+

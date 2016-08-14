@@ -11,30 +11,49 @@
 //| ----------------------------------------------------------------------------
 
 package com.example.chris.helloworld;
+
+import android.app.Activity;
 import android.content.Context;
 import android.view.GestureDetector;
 import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
+import android.app.DialogFragment;
 
-public class OnSwipeTouchListener implements OnTouchListener {
+public class OnSwipeTouchListener 
+	implements 
+		OnTouchListener 
+{
 
+	//{ Interface: =============================================================
+	
 	//An interface to define functions to execute on a swipe.
 	public interface SwipeFunctions {
-        public void swipeRightFunc();
-		public void swipeLeftFunc();
-		public void swipeUpFunc();
-		public void swipeDownFunc() ;
+        void swipeRightFunc();
+		void swipeLeftFunc();
+		void swipeUpFunc();
+		void swipeDownFunc() ;
     }
 
-	//Swipe functions.
-	private SwipeFunctions mySwipeFuncs;
+	//} ------------------------------------------------------------------------
 	
-	//GestureDetector object to detect swipes.
-    private final GestureDetector gestureDetector;
+	//{ Private members: =======================================================
 
-	//{ OnSwipeTouchListener constructor =======================================
+		//Swipe functions.
+		private SwipeFunctions mySwipeFuncs;
+		
+		//GestureDetector object to detect swipes.
+		private final GestureDetector gestureDetector;
+
+		//Reference to parent context.
+		private Context myContext;
+		
+	//} ------------------------------------------------------------------------
+	
+	//{ Constructors: ==========================================================
+	
+	//{ ------------------------------------------------------------------------
 	//|
 	//|	The gestureDetector is created using our SwipeGestureListener class.
 	//|
@@ -42,20 +61,25 @@ public class OnSwipeTouchListener implements OnTouchListener {
     public OnSwipeTouchListener(
 		Context ctx
 	){
-	//--------------------------------------------------------------------------
-	
 		//Set our gestureDetector to a new GestureDetector created with our
 		//SwipeGestureListener class.
         gestureDetector = new GestureDetector(ctx, new SwipeGestureListener());
 		
 		//Set swipe functions interface.
 		mySwipeFuncs = (SwipeFunctions)ctx;
-    }
-	//} ------------------------------------------------------------------------
+		
+		//Set context reference.
+		myContext = ctx;
+		
+    } //} ----------------------------------------------------------------------
 
-	//{ onTouch method =========================================================
+	//} ------------------------------------------------------------------------
+	
+	//{ OnTouchListener class overrides: ======================================= 
+	
+	//{ onTouch ----------------------------------------------------------------
 	//|
-	//|	Implementation of OnTouchListener::onTouch method.
+	//|	Override for OnTouchListener::onTouch method.
 	//|
 	//|	A touch event on the given view will be handled by the gestureDetector
 	//| and the result returned.
@@ -66,10 +90,11 @@ public class OnSwipeTouchListener implements OnTouchListener {
 		View 			myView,
 		MotionEvent 	event
 	){
-	//--------------------------------------------------------------------------
+		//Let gesture detector handle touch.
+        return(gestureDetector.onTouchEvent(event));
+		
+    } //} ----------------------------------------------------------------------
 	
-        return gestureDetector.onTouchEvent(event);
-    }
 	//} ------------------------------------------------------------------------
 	
 	//{ SwipeGestureListener class =============================================
@@ -86,7 +111,7 @@ public class OnSwipeTouchListener implements OnTouchListener {
         private static final int SWIPE_THRESHOLD = 100;
         private static final int SWIPE_VELOCITY_THRESHOLD = 100;
 
-		//{ onDown method ======================================================
+		//{ onDown -------------------------------------------------------------
 		//|
 		//|	Override for SimpleOnGestureListener::onDown method.
 		//|
@@ -100,13 +125,30 @@ public class OnSwipeTouchListener implements OnTouchListener {
         public boolean onDown(
 			MotionEvent event
 		){
-		//----------------------------------------------------------------------
-		
             return(true);
-        }
-		//} --------------------------------------------------------------------
+			
+        } //} ------------------------------------------------------------------
 	
-		//{ onFling method ===================================================== 
+		//{ onLongPress --------------------------------------------------------
+		//|
+		//|	Override for SimpleOnGestureListener::onLongPress method.
+		//|
+		//| Results:
+		//|
+		//|		On a long press, we will display a dialog to confirm if we
+		//|		want to generate a new map.
+		//|
+		//| --------------------------------------------------------------------
+		@Override
+		public void onLongPress(MotionEvent event) {
+			
+			//Create new dialog and show it.
+			DialogFragment dialog = new NewMapDialog();
+			dialog.show(((Activity)myContext).getFragmentManager(), "");
+			
+		} //} ------------------------------------------------------------------
+	
+		//{ onFling ------------------------------------------------------------ 
 		//|
 		//|	Override for SimpleOnGestureListener::onFling method.
 		//|
@@ -125,8 +167,6 @@ public class OnSwipeTouchListener implements OnTouchListener {
 			float 			velocityX,
 			float 			velocityY
 		){
-		//----------------------------------------------------------------------
-		
 			//The result of this function.
             boolean result;
 		
@@ -179,10 +219,10 @@ public class OnSwipeTouchListener implements OnTouchListener {
 			
 			//Return the result.
             return(result);
-        }
-		//} --------------------------------------------------------------------
-    }
-	//} ------------------------------------------------------------------------
+			
+        } //} ------------------------------------------------------------------
+		
+    } //} ----------------------------------------------------------------------
 
 } //----------------------------------------------------------------------------
 

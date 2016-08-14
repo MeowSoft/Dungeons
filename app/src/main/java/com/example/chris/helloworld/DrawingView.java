@@ -11,20 +11,26 @@
 //| ----------------------------------------------------------------------------
 
 package com.example.chris.helloworld;
+
+import android.app.Activity;
 import android.content.Context;
-import android.graphics.Color;
-import android.os.SystemClock;
+import android.graphics.BitmapFactory;
 import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.view.View;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import android.graphics.Path;
-import android.view.MotionEvent;
 import android.os.Handler;
+import android.app.DialogFragment;
+import android.widget.Button;
+import java.util.Timer;
+import java.util.TimerTask;
 
-public class DrawingView extends View  {
+public class DrawingView
+	extends 
+		View
+{
 
 	//{ Private members: =======================================================
 
@@ -37,6 +43,9 @@ public class DrawingView extends View  {
 		//Total length of time to take drawing the view in 'DrawMapWithDelay'.
 		private static final int SPIRAL_DRAW_MAX_TIME = 2500;
 
+		//Time between successive enemy updates. (How fast they move)
+		private static final int ENEMY_UPDATE_TIME = 500;
+		
 		//Paint for drawing stuff.
 		private Paint drawPaint;
 
@@ -56,13 +65,23 @@ public class DrawingView extends View  {
 		//Var to delay between drawing rooms in 'DrawMapWithDelay'.
 		private int drawDelay;
 	
-		//Interfacce to define a function to draw a room.
+		//Interface to define a function to draw a room.
 		private interface drawRoomFunc {
 			void func(final int roomX, final int roomY);
 		}
 	
-	//} ------------------------------------------------------------------------
+		//A timer and task to update enemy activity.
+		private Timer enemyUpdateTimer;
+		private TimerTask updateEnemyTask;
 	
+		//Flag to indicate a map has been generated for enemy update task.
+		private boolean mapflag;
+	
+		//Flag to only show enemy alert on the first encounter.
+		private boolean alertFlag;
+	
+	//} ------------------------------------------------------------------------
+
 	//{ Constructors: ==========================================================
 
 	//{ ------------------------------------------------------------------------
@@ -72,23 +91,59 @@ public class DrawingView extends View  {
 	//|
 	//| ------------------------------------------------------------------------
     public DrawingView(
-		Context 		context,
+		final Context 	context,
 		AttributeSet 	attributes
 	){
-		
 		//Call superclass constructor.
         super(context, attributes);
 		
+		//Get context.
 		myContext = context;
 
 		//Set up canvas.
         _setupDrawing();
+		mapflag = false;
+		
+		//Initialize alert flag.
+		alertFlag = false;
+		
+		//Set up enemy activity update timer.
+		enemyUpdateTimer = new Timer();
+		updateEnemyTask = new TimerTask() {
+			
+			//Update task needs to redraw the view if enemies move so we
+			//set it up to run on the UI thread.
+			@Override
+			public void run() {
+				((Activity)context).runOnUiThread(new Runnable() {
+					@Override
+					public void run() {
+						
+						//If a map has been generated...
+						if(mapflag) {
+							
+							//Update enemies.
+							myMapBuilder.updateEnemyActivity();
+				
+							//Redraw map.
+							DrawMapWithOutDelay();
+				
+							//Redraw view.
+							invalidate();
+						}
+					}
+				});
+			}
+		};
+
+		//Schedule enemy task with timer.
+		enemyUpdateTimer.schedule(updateEnemyTask, 0, ENEMY_UPDATE_TIME);
 		
     } //} ----------------------------------------------------------------------
 	
 	//} ------------------------------------------------------------------------
 
-	//{ View class method overrides: ===========================================
+	//{ View class overrides: ==================================================
 	
 	//{ onSizeChanged ----------------------------------------------------------
 	//|
@@ -138,7 +193,7 @@ public class DrawingView extends View  {
         canvas.drawBitmap(canvasBitmap, 0, 0, drawPaint);
 		
     } //} ----------------------------------------------------------------------
-	
+
 	//} ------------------------------------------------------------------------
 
 	//{ Private methods: =======================================================
@@ -197,8 +252,8 @@ public class DrawingView extends View  {
 	//|
 	//|	Function parameters:
 	//|
-	//|		RoomX
-	//|		RoomY
+	//|		roomX
+	//|		roomY
 	//|		Map coordinates of the room to draw relative to the room in the
 	//|		center of the display.
 	//|
@@ -208,8 +263,8 @@ public class DrawingView extends View  {
 	//|
 	//| ------------------------------------------------------------------------
     private void _drawRoom(
-		int 		RoomX,
-		int 		RoomY
+		int 		roomX,
+		int 		roomY
 	){
 		//Vars to calculate pixel coordinates of room to draw.
         int pixX;
@@ -219,15 +274,15 @@ public class DrawingView extends View  {
 		int roomColor;
 		
 		//Get pixel coordinates for room.
-        pixX = ((RoomX + (MAP_DRAW_SIZE / 2)) * roomSize);
-        pixY = ((RoomY + (MAP_DRAW_SIZE / 2)) * roomSize);
+        pixX = ((roomX + (MAP_DRAW_SIZE / 2)) * roomSize);
+        pixY = ((roomY + (MAP_DRAW_SIZE / 2)) * roomSize);
 		
 		//Default to no room color.
 		roomColor = ContextCompat.getColor(myContext, R.color.noRoomColor);
 		drawPaint.setColor(roomColor);
 		
 		//If we are drawing a room...
-		if(myMapBuilder._CheckRoom(RoomX, RoomY)) {
+		if(myMapBuilder.checkRoom(roomX, roomY)) {
 			
 			//Set room color.
 			roomColor = ContextCompat.getColor(myContext, R.color.roomColor);
@@ -243,26 +298,19 @@ public class DrawingView extends View  {
 			drawPaint
 		);
 		
-		//If this is the room in the center of the view...
-		if((RoomX == 0) && (RoomY == 0)) {
-			
-			//Draw character.
-			drawPaint.setStyle(Paint.Style.STROKE);
-			drawPaint.setColor(Color.parseColor("Green"));
-			drawCanvas.drawRect(
-				pixX,
-				pixY,
-				(pixX + roomSize - MAP_GRID_BORDER_SIZE),
-				(pixY + roomSize - MAP_GRID_BORDER_SIZE),
-				drawPaint
-			);
-
-			drawPaint.setStyle(Paint.Style.FILL_AND_STROKE);
+		//Draw hero in the center of the view.
+		if((roomX == 0) && (roomY == 0)) {
+			_drawHero(pixX, pixY);
 		}
 		
-		if(myMapBuilder._RoomHasEnemy(RoomX, RoomY)) {
-			drawPaint.setColor(Color.parseColor("Blue"));
-			drawCanvas.drawCircle((pixX + (roomSize / 2)), (pixY + (roomSize / 2)), ((roomSize / 2) - 10), drawPaint);
+		//If the room is the exit room, then draw the exit.
+		else if(myMapBuilder.roomIsExit(roomX, roomY)) {
+			_drawExit(pixX, pixY);
+		}
+		
+		//If the room has an enemy, then draw one.
+		else if(myMapBuilder.roomHasEnemy(roomX, roomY)) {
+			_drawEnemy(pixX, pixY, myMapBuilder.roomEnemyIsAlive(roomX, roomY));
 		}
 		
     } //} ----------------------------------------------------------------------
@@ -334,12 +382,164 @@ public class DrawingView extends View  {
 			//Reverse direction.
             DirFlip *= -1;
         }
+	
+	} //} ----------------------------------------------------------------------
+	
+	//{ _drawHero --------------------------------------------------------------
+	//|
+	//|	Draw our hero on the map view.
+	//|
+	//|	Function parameters:
+	//|
+	//|		pixX,
+	//|		pixY
+	//|		X and Y pixel coordinates to draw our hero to.
+	//|
+	//|	Results:
+	//|
+	//|		The hero is drawn to the view at the given location.
+	//|
+	//| ------------------------------------------------------------------------
+	private void _drawHero(
+		int 	pixX,
+		int 	pixY
+	){
+		//Hero bitmap.
+		Bitmap myHero;
 		
-		//Redraw view.
-        invalidate();
+		//Get hero bitmap.
+		myHero = BitmapFactory.decodeResource(getResources(), R.drawable.hero);
+
+		//Scale.
+		myHero = Bitmap.createScaledBitmap(myHero, roomSize, roomSize, true);
+		
+		//Draw to screen.
+		drawCanvas.drawBitmap(myHero, pixX, pixY, drawPaint);
 		
 	} //} ----------------------------------------------------------------------
 	
+	//{ _drawExit --------------------------------------------------------------
+	//|
+	//|	Draw the exit on the map view.
+	//|
+	//|	Function parameters:
+	//|
+	//|		pixX,
+	//|		pixY
+	//|		X and Y pixel coordinates to draw the exit to.
+	//|
+	//|	Results:
+	//|
+	//|		The exit is drawn to the view at the given location.
+	//|
+	//| ------------------------------------------------------------------------
+	private void _drawExit(
+		int 	pixX,
+		int 	pixY
+	){
+		//Color to draw the exit.
+		int exitColor;
+		
+		//Get exit color.
+		exitColor = ContextCompat.getColor(myContext, R.color.mapExitColor);
+		
+		//Draw exit.
+		drawPaint.setStyle(Paint.Style.STROKE);
+		drawPaint.setColor(exitColor);
+		drawPaint.setStrokeWidth(6);
+		drawCanvas.drawRect(
+			pixX + 6,
+			pixY + 6,
+			(pixX + roomSize - MAP_GRID_BORDER_SIZE - 6),
+			(pixY + roomSize - MAP_GRID_BORDER_SIZE - 6),
+			drawPaint
+		);
+		
+		drawPaint.setStrokeWidth(2);
+		drawPaint.setStyle(Paint.Style.FILL_AND_STROKE);
+		
+	} //} ----------------------------------------------------------------------
+	
+	//{ _drawEnemy -------------------------------------------------------------
+	//|
+	//|	Draw an enemy on the map view.
+	//|
+	//|	Function parameters:
+	//|
+	//|		pixX,
+	//|		pixY
+	//|		X and Y pixel coordinates to draw the enemy to.
+	//|
+	//|		alive
+	//|		Flag to indicate if enemy is alive or dead.
+	//|
+	//|	Results:
+	//|
+	//|		An enemy is drawn to the view at the given location.
+	//|
+	//| ------------------------------------------------------------------------
+	private void _drawEnemy(
+		int 	pixX, 
+		int 	pixY,
+		boolean alive
+	){
+		//Enemy bitmap.
+		Bitmap myEnemy;
+		
+		//Get alive or dead enemy bitmap.
+		if(alive) {
+			myEnemy = BitmapFactory.decodeResource(getResources(), R.drawable.enemy);
+		}
+		else{
+			myEnemy = BitmapFactory.decodeResource(getResources(), R.drawable.deadenemy);
+		}
+		
+		//Scale the enemy.
+		myEnemy = Bitmap.createScaledBitmap(myEnemy, roomSize, roomSize, true);
+		
+		//Draw to screen.
+		drawCanvas.drawBitmap(myEnemy, pixX, pixY, drawPaint);
+		
+	} //} ----------------------------------------------------------------------
+	
+	//{ _showEnemyWarning ------------------------------------------------------
+	//|
+	//|	Show an enemy alert pop up.
+	//|
+	//| Results:
+	//|
+	//|		An enemy alert dialog is created and shown.
+	//|
+	//| ------------------------------------------------------------------------
+	private void _showEnemyWarning() {
+		
+        //Create new alert dialog and show it.
+        DialogFragment dialog = new EnemyAlertDialog();
+        dialog.show(((Activity)myContext).getFragmentManager(), "");
+		
+    } //} ----------------------------------------------------------------------
+
+	//{ _showWinnerNotice ------------------------------------------------------
+	//|
+	//|	Show the 'you win' pop up.
+	//|
+	//| Results:
+	//|
+	//|		A winner dialog is created and shown.
+	//|
+	//| ------------------------------------------------------------------------
+	private void _showWinnerNotice() {
+		
+		//Reset flags for next time.
+		mapflag = false;
+		alertFlag = false;
+		
+        //Create new alert dialog and show it.
+        DialogFragment dialog = new YouWinDialog();
+        dialog.show(((Activity)myContext).getFragmentManager(), "");
+		
+    } //} ----------------------------------------------------------------------
+
 	//} ------------------------------------------------------------------------
 	
 	//{ Public methods: ========================================================
@@ -355,7 +555,7 @@ public class DrawingView extends View  {
 	//|
 	//| ------------------------------------------------------------------------
 	public void DrawMapWithDelay(){
-		
+
 		//Set up an instance of drawRoomFunc that draws a room after a short
 		//delay.
 		drawRoomFunc myDrawFunc = new drawRoomFunc() {
@@ -400,6 +600,9 @@ public class DrawingView extends View  {
 		//Call _drawMap with the delayed function.
 		_drawMap(myDrawFunc);
 		
+		//Set to indicate we have a map we can start drawing enemies to.
+		mapflag = true;
+		
 	} //} ----------------------------------------------------------------------
 
 	//{ DrawMapWithOutDelay ----------------------------------------------------
@@ -408,11 +611,15 @@ public class DrawingView extends View  {
 	//|
 	//|	Results:
 	//|
-	//|		The viewable map area is drawn instantly.
+	//|		The viewable map area is drawn instantly. If there are any enemies
+	//|		nearby, a pop up is shown briefly.
 	//|
 	//| ------------------------------------------------------------------------
 	public void DrawMapWithOutDelay(){
-		
+
+		//To get reference to the 'Fight!' button.
+		Button fightButton;
+
 		//Set up an instance of drawRoomFunc that just draws a room.
 		drawRoomFunc myDrawFunc = new drawRoomFunc() {
 			public void func(
@@ -426,21 +633,61 @@ public class DrawingView extends View  {
 		//Call _drawMap with the simple function.
 		_drawMap(myDrawFunc);
 		
+		//Get fight button.
+		fightButton = (Button)((Activity)myContext).findViewById(R.id.fightbutton);
+		
+		//If an enemy approaches, and we have not shown the alert message yet,
+		//then show pop up.
+		if(myMapBuilder.enemyApproached() && !alertFlag) {
+			alertFlag = true;
+			_showEnemyWarning();
+		}
+		
+		//If there are enemies around, the fight button should be visible.
+		if(myMapBuilder.enemiesNearby()) {
+			fightButton.setVisibility(Button.VISIBLE);
+		}
+		
+		//Otherwise, it should be hidden.
+		else {
+			fightButton.setVisibility(Button.INVISIBLE);
+		}
+
+		//If the hero has reached the exit, then show pop up.
+		if(myMapBuilder.heroIsAtExit()) {
+			_showWinnerNotice();
+		}
+		
 		//Redraw view.
         invalidate();
 		
 	} //} ----------------------------------------------------------------------
 	
-	
-	
-	
+	//{ setMapBuilder ----------------------------------------------------------
+	//|
+	//|	Sets a reference to the map builder object.
+	//|
+	//|	Function parameters:
+	//|
+	//|		theMapBuilder
+	//|		Map builder to set the reference to.
+	//|
+	//|	Results:
+	//|
+	//|		The map builder reference is set so we can call map builder
+	//|		methods from this class.
+	//|
+	//| ------------------------------------------------------------------------
 	public void setMapBuilder(
 	
 		MapBuilder theMapBuilder
 	){
+		//Set the map builder reference.
 		myMapBuilder = theMapBuilder;
-	}
-
+		
+	} //} ----------------------------------------------------------------------
+	
 	//} ------------------------------------------------------------------------
 	
-}
+} //----------------------------------------------------------------------------
+
