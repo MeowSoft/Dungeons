@@ -228,11 +228,11 @@ public class MapBuilder {
 		//Init result.
 		result = false;
 		
-		//If coordinates are valid...
-		if(_checkMapBounds(checkX,checkY)) {
-			
-			//Get map room.
-			roomPtr = Map[checkX][checkY];
+		//Get indexed room.
+		roomPtr = _getMapRoom(checkX, checkY);
+		
+		//Room is valid...
+		if(roomPtr != null) {
 			
 			//If map room is a room, and there is no alive enemy inside,
 			//then we can return TRUE.

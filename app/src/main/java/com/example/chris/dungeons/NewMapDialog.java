@@ -11,10 +11,10 @@
 
 package com.example.chris.dungeons;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
 
@@ -54,13 +54,13 @@ public class NewMapDialog
 	//| ------------------------------------------------------------------------
     @Override
     public void onAttach(
-		Context ctx
+		Activity act
 	){
 		//Superclass method.
-        super.onAttach(ctx);
+        super.onAttach(act);
 		
         //Set interface reference.
-		mListener = (NoticeDialogListener)ctx;
+		mListener = (NoticeDialogListener)act;
 
     } //} ----------------------------------------------------------------------
 
