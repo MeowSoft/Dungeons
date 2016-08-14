@@ -10,7 +10,7 @@
 //|
 //| ----------------------------------------------------------------------------
 
-package com.example.chris.helloworld;
+package com.example.chris.dungeons;
 
 import android.app.Activity;
 import android.content.Context;

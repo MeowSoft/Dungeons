@@ -10,7 +10,7 @@
 //|
 //| ----------------------------------------------------------------------------
 
-package com.example.chris.helloworld;
+package com.example.chris.dungeons;
 
 import java.util.LinkedList;
 import java.util.Random;

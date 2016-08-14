@@ -2,7 +2,7 @@
 
 <manifest 
 	xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.chris.helloworld">
+    package="com.example.chris.dungeons">
 
     <application
         android:allowBackup="true"
@@ -13,7 +13,7 @@
         android:theme="@style/Theme.AppCompat.Light.NoActionBar.FullScreen">
 		
         <activity 
-			android:name=".MyActivity"
+			android:name="com.example.chris.dungeons.MyActivity"
 			android:screenOrientation="portrait">
 			
             <intent-filter>

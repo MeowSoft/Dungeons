@@ -9,7 +9,7 @@
 //|
 //| ----------------------------------------------------------------------------
 
-package com.example.chris.helloworld;
+package com.example.chris.dungeons;
 
 class MapRoom {
 	

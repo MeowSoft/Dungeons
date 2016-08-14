@@ -9,7 +9,7 @@
 //|
 //| ----------------------------------------------------------------------------
 
-package com.example.chris.helloworld;
+package com.example.chris.dungeons;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;

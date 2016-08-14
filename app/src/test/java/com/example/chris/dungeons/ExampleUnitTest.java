@@ -1,4 +1,4 @@
-package com.example.chris.helloworld;
+package com.example.chris.dungeons;
 
 import org.junit.Test;
 

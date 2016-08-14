@@ -10,7 +10,7 @@
 //|
 //| ----------------------------------------------------------------------------
 
-package com.example.chris.helloworld;
+package com.example.chris.dungeons;
 
 import android.app.AlertDialog;
 import android.app.Dialog;

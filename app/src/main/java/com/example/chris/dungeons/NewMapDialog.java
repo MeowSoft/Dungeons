@@ -1,16 +1,15 @@
 //| ============================================================================
 //|
-//|	File:			YouWinDialog.java
+//|	File:			NewMapDialog.java
 //|	Environment:	Android Studio 2.1.2
 //|
 //|	Description:
 //|
-//|		This is a dialog class to display an alert when the hero reaches the
-//|		dungeon exit.
+//|		This is a dialog class to ask if the user wants to generate a new map.
 //|
 //| ----------------------------------------------------------------------------
 
-package com.example.chris.helloworld;
+package com.example.chris.dungeons;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -19,7 +18,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
 
-public class YouWinDialog 
+public class NewMapDialog
 	extends
 		DialogFragment
 {
@@ -73,7 +72,8 @@ public class YouWinDialog
 	//|
 	//|		The dialog is created and set to execute the 
 	//|		'onDialogPositiveClick' method from the interface reference when
-	//|		the 'Ok' button is clicked.
+	//|		the 'Yes' button is clicked and do nothing when the 'No' button
+	//|		is clicked.
 	//|
 	//| ------------------------------------------------------------------------
     @Override
@@ -82,21 +82,28 @@ public class YouWinDialog
 		//The dialog.
 		final Dialog myDialog;
 		
-		//Interface listener.
-		DialogInterface.OnClickListener myListener;
+		//Interface listeners.
+		DialogInterface.OnClickListener myPositiveListener;
+		DialogInterface.OnClickListener myNegativeListener;
 		
-		//Create listener to call method on 'Ok' click.
-		myListener = new DialogInterface.OnClickListener() {
+		//Create listener to call method on 'Yes' click.
+		myPositiveListener = new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int id) {
-				mListener.onDialogPositiveClick(YouWinDialog.this);
+				mListener.onDialogPositiveClick(NewMapDialog.this);
 			}
 		};
 		
+		//Create listener to do nothing on 'No' click.
+		myNegativeListener = new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int id) {}
+		};
+
         //Build the dialog.
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        builder.setMessage(R.string.winner_alert);
-        builder.setPositiveButton(R.string.i_win_yay, myListener);
-
+        builder.setMessage(R.string.new_map_query);
+        builder.setPositiveButton(R.string.button_yes, myPositiveListener);
+		builder.setNegativeButton(R.string.button_no, myNegativeListener);
+		
 		//Create the dialog.
 		myDialog = builder.create();
 	
