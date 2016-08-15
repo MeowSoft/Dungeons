@@ -56,7 +56,8 @@ public class MapBuilder {
 	//{ ------------------------------------------------------------------------
 	//|
 	//| This constructor creates a new array of room objects that will
-	//|	represent the dungeon. The 
+	//|	represent the dungeon. A random number generator is created and a
+	//|	linked list to hold enemies is created as well.
 	//|
 	//| ------------------------------------------------------------------------
     public MapBuilder(
@@ -197,7 +198,7 @@ public class MapBuilder {
 
 	//{ _checkForHeroMove ------------------------------------------------------
 	//|
-	//|	Check if the hero can be moed into the given room
+	//|	Check if the hero can be moved into the given room
 	//|
 	//|	Function parameters:
 	//|
